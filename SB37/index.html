@@ -13,17 +13,22 @@
         <strong>COA: Compliance Opportunity Assessment</strong>
         <span>SB37 readiness screening for California lawyer advertising teams.</span>
       </div>
-      <nav class="nav-shell" aria-label="Primary navigation">
+      <div class="top-scan-shell">
         <a class="brand" href="index.html" aria-label="SB37 COA home">
           <img src="assets/sb37-coa-logo.png" alt="SB37 COA logo">
         </a>
-        <div class="nav-links">
-          <a href="#assessment">Assessment</a>
+        <form class="top-scan-form" id="assessmentForm">
+          <label class="sr-only" for="website">Law firm website</label>
+          <input id="website" name="website" type="url" placeholder="Paste law firm website" required>
+          <button class="button primary" type="submit">Run test</button>
+        </form>
+        <div class="small-links" aria-label="Site links">
+          <a href="#assessment">Report</a>
           <a href="#packages">Packages</a>
           <a href="about.html">About</a>
-          <a href="terms.html">TOS</a>
+          <a href="terms.html">Terms</a>
         </div>
-      </nav>
+      </div>
     </header>
 
     <main>
@@ -32,9 +37,10 @@
           <p class="eyebrow">California SB37 + AI advertising accountability</p>
           <h1>See where your law firm marketing may create SB37 exposure.</h1>
           <p class="hero-lede">A simple, Credit Karma-style first look for owners and marketing teams managing legal ads, AI content, landing pages, lead generators, intake scripts, referral funnels, and chatbots.</p>
-          <div class="hero-actions">
-            <a class="button primary" href="#assessment">Run free test</a>
-            <a class="button secondary" href="about.html">View scoring deltas</a>
+          <div class="hero-actions text-links">
+            <a href="#assessment">View report area</a>
+            <a href="about.html">Scoring deltas</a>
+            <a href="terms.html">Terms</a>
           </div>
         </div>
         <aside class="score-panel" aria-label="Sample SB37 readiness score">
@@ -79,37 +85,20 @@
       <section class="assessment-shell" id="assessment">
         <div class="section-heading">
           <p class="eyebrow">Free assessment</p>
-          <h2>Paste a website and run a first-pass SB37 report.</h2>
-          <p>Start with the firm website. The scan attempts to read the site, infer the practice area, and score every SB37 risk market automatically; the full review covers chatbots, vendor scripts, call recordings, referral partners, paid ads, and change monitoring.</p>
+          <h2>Run a first-pass SB37 report from the website bar above.</h2>
+          <p>The scan attempts to read the site, infer the practice area, and score every SB37 risk market automatically; the full review covers chatbots, vendor scripts, call recordings, referral partners, paid ads, and change monitoring.</p>
         </div>
 
-        <div class="assessment-grid">
-          <form class="assessment-card" id="assessmentForm">
-            <fieldset id="siteStep">
-              <legend>Run SB37 website test</legend>
-              <label for="website">Law firm website</label>
-              <div class="inline-field">
-                <input id="website" name="website" type="url" placeholder="https://examplelaw.com" required>
-                <button class="button primary" type="submit">Run test</button>
-              </div>
-
-              <label for="firmName">Firm name</label>
-              <input id="firmName" name="firmName" placeholder="Your law firm">
-
-              <div class="auto-scan-card" id="scanStatus">
-                <strong>Automatic scan checks every SB37 market</strong>
-                <span>Practice type, disclosures, case-result language, awards, AI/synthetic content, chatbot hints, intake language, vendor/referral signals, and attorney transparency.</span>
-              </div>
-
-              <p class="form-note">This free web scan is a preliminary screen. Some websites block extraction or hide chatbot/vendor workflows; the full COA review verifies those systems directly.</p>
-            </fieldset>
-          </form>
-
+        <div class="assessment-output">
+          <div class="auto-scan-card" id="scanStatus">
+            <strong>Automatic scan checks every SB37 market</strong>
+            <span>Practice type, disclosures, case-result language, awards, AI/synthetic content, chatbot hints, intake language, vendor/referral signals, and attorney transparency.</span>
+          </div>
           <article class="report-card" id="reportCard" aria-live="polite">
             <div class="report-empty">
               <span class="report-badge">Ready</span>
               <h3>Your free SB37 snapshot will appear here.</h3>
-              <p>Enter a website and run the test to get an immediate preview of likely attention areas before ordering a full COA review.</p>
+              <p>Paste a website in the top bar and run the test to get an immediate preview of likely attention areas before ordering a full COA review.</p>
             </div>
           </article>
         </div>

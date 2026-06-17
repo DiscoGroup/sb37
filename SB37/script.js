@@ -383,7 +383,7 @@ if (assessmentForm) {
     const websiteInput = document.querySelector("#website");
     const submitButton = assessmentForm.querySelector("button[type='submit']");
     const rawWebsite = websiteInput.value.trim();
-    const firmName = document.querySelector("#firmName").value.trim();
+    const firmName = "";
     const normalizedWebsite = normalizeWebsite(rawWebsite);
 
     submitButton.disabled = true;
@@ -414,6 +414,7 @@ if (assessmentForm) {
     });
 
     renderReport({ firmName, website: scanData.normalizedUrl, practice, scoreData });
+    document.querySelector("#assessment").scrollIntoView({ behavior: "smooth", block: "start" });
     submitButton.disabled = false;
     submitButton.textContent = "Run test";
   });
