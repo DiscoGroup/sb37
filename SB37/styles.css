@@ -1064,6 +1064,49 @@ select:focus {
   color: var(--muted);
 }
 
+.implementation-brief {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(180, 59, 69, 0.2);
+  border-radius: 8px;
+  background: #fff8f8;
+}
+
+.implementation-brief h4 {
+  margin: 0 0 4px;
+}
+
+.implementation-brief p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.implementation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.implementation-list article {
+  padding: 14px;
+  border: 1px solid rgba(180, 59, 69, 0.16);
+  border-radius: 8px;
+  background: var(--white);
+}
+
+.implementation-list span {
+  display: block;
+  color: #8f2630;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.implementation-list strong {
+  display: block;
+  margin: 5px 0 5px;
+}
+
 .produce-report-card h4 {
   margin: 0 0 4px;
 }

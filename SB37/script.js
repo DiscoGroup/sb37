@@ -664,16 +664,198 @@ function renderMarketBoard(categoryScores) {
 }
 
 const categoryFixes = {
-  disclosures: "Place attorney advertising, responsible attorney, firm identity, office address, and disclaimer language in visible page-level locations.",
-  claims: "Pair every result, recovery, settlement, verdict, and compensation claim with nearby context and past-results disclaimer language.",
-  awards: "Add source, date, ranking body, eligibility criteria, and limitations near award, best, top, or specialist claims.",
-  ai: "Document attorney review for AI-assisted content and avoid any copy that implies automated legal advice or synthetic attorney endorsement.",
-  chatbot: "Add no-legal-advice and no-attorney-client language before chat or case-evaluation flows, with clear attorney escalation rules.",
-  intake: "Review intake scripts for outcome promises and document attorney supervision for non-attorney staff or call center workflows.",
-  vendor: "Require attorney approval before vendor-created SEO, PPC, landing pages, content updates, or lead-generation copy goes live.",
-  referral: "Clarify referral, co-counsel, partner, network, affiliate, and lead-generator relationships wherever those signals appear.",
-  transparency: "Make attorney identity, firm ownership, office location, and responsible-contact details easy to find from the scanned pages."
+  disclosures: {
+    risk: "Disclosure problems turn otherwise ordinary marketing into a recordkeeping and supervision problem. If the disclaimer exists only in a footer or legal page, the claim-level context can still look weak.",
+    firstFix: "Place attorney advertising, responsible attorney, firm identity, office address, and disclaimer language in visible page-level locations.",
+    implementation: [
+      "Create a reusable disclosure block for every landing page template.",
+      "Place the block near high-intent CTAs, chat widgets, case-result sections, testimonial sections, and footer.",
+      "Confirm the responsible attorney or firm identity appears in crawlable text, not only inside an image.",
+      "Snapshot before and after versions for the compliance file."
+    ],
+    evidence: [
+      "Screenshots of each page template after update.",
+      "Responsible attorney approval note.",
+      "Version date and URL inventory."
+    ],
+    serviceNeed: "This usually requires page-template edits plus a claims inventory, not a one-line footer change."
+  },
+  claims: {
+    risk: "Result and compensation language is the highest-friction area because it can create expectation, guarantee, or misleading-comparison risk even when a general disclaimer exists elsewhere.",
+    firstFix: "Pair every result, recovery, settlement, verdict, and compensation claim with nearby context and past-results disclaimer language.",
+    implementation: [
+      "Inventory every dollar amount, verdict, settlement, recovered, won, success, and compensation phrase.",
+      "Add matter-specific context where allowed: jurisdiction, case type, date range, and that every case is different.",
+      "Move past-results disclaimer language close to the claim, not only in the footer.",
+      "Remove guarantee, quick-cash, fast-settlement, and maximum-compensation phrasing unless counsel approves exact wording."
+    ],
+    evidence: [
+      "Result-claim spreadsheet with URL, claim text, source, approval date, and disclaimer placement.",
+      "Backup documents for each published number or outcome.",
+      "Attorney signoff for edited copy."
+    ],
+    serviceNeed: "This is where firms often need a human page-by-page review because one aggressive phrase can offset otherwise good disclosure work."
+  },
+  awards: {
+    risk: "Award, ranking, top, best, expert, and specialist language can imply objective superiority unless the source and limits are visible.",
+    firstFix: "Add source, date, ranking body, eligibility criteria, and limitations near award, best, top, or specialist claims.",
+    implementation: [
+      "Build an awards and rankings substantiation file.",
+      "Add source/date language beside each badge or superiority claim.",
+      "Separate certified-specialist claims from informal expert/top/best marketing language.",
+      "Remove unsupported best/top/#1 wording or replace it with sourced, factual language."
+    ],
+    evidence: [
+      "Award certificates or source pages.",
+      "Selection methodology where available.",
+      "Attorney approval for each claim."
+    ],
+    serviceNeed: "Badges and ranking widgets are often vendor-managed, so cleanup usually requires coordinating web, SEO, and attorney approval."
+  },
+  ai: {
+    risk: "AI-assisted content creates accountability risk when nobody can prove an attorney reviewed the output before publication.",
+    firstFix: "Document attorney review for AI-assisted content and avoid any copy that implies automated legal advice or synthetic attorney endorsement.",
+    implementation: [
+      "Label AI-assisted workflows internally, even if not public-facing.",
+      "Require attorney review before AI-assisted content, images, video, or chat copy goes live.",
+      "Avoid AI lawyer, virtual lawyer, automated legal advice, synthetic voice, or avatar claims.",
+      "Keep prompts, drafts, approvals, and final copy in a review log."
+    ],
+    evidence: [
+      "AI content review log.",
+      "Approval workflow screenshots.",
+      "Vendor AI-use disclosure and takedown terms."
+    ],
+    serviceNeed: "This is difficult to repair after the fact because firms often cannot reconstruct who approved what."
+  },
+  chatbot: {
+    risk: "Chat and case-evaluation flows can look like legal advice or attorney-client intake before conflicts, disclaimers, and escalation are clear.",
+    firstFix: "Add no-legal-advice and no-attorney-client language before chat or case-evaluation flows, with clear attorney escalation rules.",
+    implementation: [
+      "Add pre-chat disclaimer language before the user submits facts.",
+      "Block the bot from giving case-specific legal conclusions.",
+      "Create escalation rules for urgent, jurisdictional, conflict, and representation questions.",
+      "Sample transcripts monthly and document remediation."
+    ],
+    evidence: [
+      "Chat script and prompt policy.",
+      "Transcript QA samples.",
+      "Escalation and conflict-screen procedure."
+    ],
+    serviceNeed: "Chatbot risk is not visible from the homepage alone; it needs flow testing and transcript sampling."
+  },
+  intake: {
+    risk: "Intake copy and call-center scripts are where marketing turns into reliance. Outcome promises from non-attorneys can be worse than the page copy.",
+    firstFix: "Review intake scripts for outcome promises and document attorney supervision for non-attorney staff or call center workflows.",
+    implementation: [
+      "Collect scripts, form autoresponders, SMS templates, call prompts, and CRM nurture copy.",
+      "Remove promises about settlement speed, payment, case value, or guaranteed help.",
+      "Add supervision and escalation rules for non-attorney staff.",
+      "Train intake staff and record the training date."
+    ],
+    evidence: [
+      "Approved script library.",
+      "Training records.",
+      "Call QA checklist and sample review log."
+    ],
+    serviceNeed: "Most firms miss this because intake assets live in CRM, call center, and vendor systems outside the website."
+  },
+  vendor: {
+    risk: "Vendor-created SEO, PPC, landing pages, and lead funnels can change faster than attorney review. The firm still owns the public-facing marketing risk.",
+    firstFix: "Require attorney approval before vendor-created SEO, PPC, landing pages, content updates, or lead-generation copy goes live.",
+    implementation: [
+      "List every vendor with publishing access or campaign control.",
+      "Add attorney approval rights and takedown timing to vendor workflows.",
+      "Review paid landing pages, ad copy, dynamic inserts, and SEO pages against the same rules as the main site.",
+      "Create a monthly change-detection process."
+    ],
+    evidence: [
+      "Vendor roster and access list.",
+      "Approval workflow records.",
+      "Ad and landing-page archive."
+    ],
+    serviceNeed: "This becomes painful because the highest-risk copy is often outside the main CMS and changes without the firm's legal review."
+  },
+  referral: {
+    risk: "Referral, matching, network, affiliate, partner, and co-counsel language can make ownership and responsibility unclear to consumers.",
+    firstFix: "Clarify referral, co-counsel, partner, network, affiliate, and lead-generator relationships wherever those signals appear.",
+    implementation: [
+      "Inventory every page and funnel that mentions referrals, partners, networks, co-counsel, or powered-by language.",
+      "Clarify who owns the advertising and who will contact the consumer.",
+      "Add required relationship disclosures near lead forms and comparison pages.",
+      "Confirm lead-generator contracts match the public-facing language."
+    ],
+    evidence: [
+      "Referral and lead-source inventory.",
+      "Co-counsel or lead-gen agreements.",
+      "Screenshots of relationship disclosures."
+    ],
+    serviceNeed: "This usually needs contract review plus page cleanup because the website language and vendor agreements often do not match."
+  },
+  transparency: {
+    risk: "If the attorney, firm, office, or responsible contact is not obvious, consumers and regulators may not know who owns the advertisement.",
+    firstFix: "Make attorney identity, firm ownership, office location, and responsible-contact details easy to find from the scanned pages.",
+    implementation: [
+      "Make attorney and firm identity visible in crawlable text.",
+      "Add office/contact details to footer, contact page, attorney page, and landing-page templates.",
+      "Link attorney bios from practice pages and high-conversion pages.",
+      "Archive screenshots after deployment."
+    ],
+    evidence: [
+      "Attorney bio inventory.",
+      "Office-address screenshots.",
+      "Responsible-contact approval record."
+    ],
+    serviceNeed: "This is straightforward to fix, but easy to break later when vendors launch standalone landing pages."
+  }
 };
+
+function categoryFix(category) {
+  return categoryFixes[category.id] || {
+    risk: "This area needs a focused review because the preview found public-facing signals that may require better context, documentation, or supervision.",
+    firstFix: "Review this category with California advertising counsel and document the remediation path.",
+    implementation: [
+      "Inventory affected pages and assets.",
+      "Confirm the correct disclaimer, substantiation, and approval record.",
+      "Update the public copy and archive the before/after version."
+    ],
+    evidence: [
+      "URL inventory.",
+      "Attorney approval record.",
+      "Before/after screenshots."
+    ],
+    serviceNeed: "A full review can separate true issues from noisy public-page signals."
+  };
+}
+
+function renderImplementationBrief(categoryScores) {
+  const priorityCategories = categoryScores
+    .filter((category) => category.percent < 100)
+    .sort((a, b) => a.percent - b.percent)
+    .slice(0, 3);
+  if (!priorityCategories.length) return "";
+
+  return `
+    <section class="implementation-brief">
+      <div>
+        <h4>Implementation brief</h4>
+        <p>These are the first fixes a marketing team would need to scope before this looks operationally clean.</p>
+      </div>
+      <div class="implementation-list">
+        ${priorityCategories.map((category) => {
+          const fix = categoryFix(category);
+          return `
+            <article>
+              <span>${escapeHtml(category.name)} · ${category.percent}%</span>
+              <strong>${escapeHtml(fix.firstFix)}</strong>
+              <p>${escapeHtml(fix.risk)}</p>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+}
 
 function renderProduceReportForm() {
   return `
@@ -752,6 +934,7 @@ function renderReport({ firmName, website, practice, scoreData }) {
         <h4>Breakdown</h4>
         <div class="market-board">${renderMarketBoard(scoreData.categoryScores)}</div>
       </section>
+      ${renderImplementationBrief(scoreData.categoryScores)}
       ${renderExampleCta(website, practice)}
       ${renderProduceReportForm()}
       <p class="form-note">Educational preliminary screen only. Not legal advice and not a compliance certification.</p>
@@ -766,8 +949,10 @@ function reportLines(contact, reportData) {
   const priorityCategories = scoreData.categoryScores
     .filter((category) => category.percent < 100)
     .sort((a, b) => a.percent - b.percent);
+  const criticalCount = priorityCategories.filter((category) => category.percent < 60).length;
+  const reviewCount = priorityCategories.length;
   const lines = [
-    "SB37 COA Preview Report",
+    "SB37 COA Remediation Preview",
     "",
     `Website: ${website}`,
     `Detected practice: ${practice}`,
@@ -785,7 +970,21 @@ function reportLines(contact, reportData) {
     `Modules run: ${scoreData.categoryScores.length}`,
     `Words scanned: ${scoreData.wordsScanned}`,
     "",
-    "Suggested Changes"
+    "Executive Readout",
+    `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced review work. ${criticalCount} categories are in priority-review territory.`,
+    "This does not mean the site is noncompliant. It means the public marketing record has claims, workflows, or relationship signals that should be cleaned up and documented before they become expensive to unwind.",
+    "",
+    "Why This Becomes Painful",
+    "A law firm website is only one surface. The same language often appears in paid ads, landing pages, chat prompts, intake scripts, CRM automations, vendor pages, and lead-source funnels. If those assets are not inventoried and attorney-approved, fixing the homepage alone leaves the risk trail open.",
+    "",
+    "Implementation Roadmap",
+    "1. Freeze and inventory: capture the current URLs, landing pages, ads, forms, chat prompts, and intake scripts before edits start.",
+    "2. Prioritize high-risk language: handle results, guarantees, awards, specialization, intake promises, referral language, and vendor pages first.",
+    "3. Add page-level context: move disclaimers and substantiation close to the claims that create the issue.",
+    "4. Create approval evidence: record responsible attorney review, version dates, vendor signoff, and before/after screenshots.",
+    "5. Monitor drift: repeat this after vendors, PPC teams, SEO teams, chat tools, or intake teams make changes.",
+    "",
+    "Category Remediation"
   ];
 
   if (!priorityCategories.length) {
@@ -793,12 +992,24 @@ function reportLines(contact, reportData) {
   }
 
   priorityCategories.forEach((category, index) => {
+    const fix = categoryFix(category);
     lines.push("");
     lines.push(`${index + 1}. ${category.name} (${category.percent}%)`);
-    lines.push(`Reason: ${categoryPreviewReason(category)}`);
-    lines.push(`Recommended change: ${categoryFixes[category.id] || "Review this category with California advertising counsel and document the remediation path."}`);
+    lines.push(`Preview reason: ${categoryPreviewReason(category)}`);
+    lines.push(`Why it matters: ${fix.risk}`);
+    lines.push(`First fix: ${fix.firstFix}`);
+    lines.push("How to implement:");
+    fix.implementation.forEach((step) => lines.push(`- ${step}`));
+    lines.push("Evidence to keep:");
+    fix.evidence.forEach((item) => lines.push(`- ${item}`));
+    lines.push(`Where teams get stuck: ${fix.serviceNeed}`);
   });
 
+  lines.push("");
+  lines.push("Recommended Service Path");
+  lines.push("Phase 1 - Full COA review: crawl public pages, paid landing pages, ad copy, chat/intake flows, referral funnels, and vendor-created content.");
+  lines.push("Phase 2 - Remediation sprint: rewrite risky copy, add claim-level context, build substantiation files, and document attorney approval.");
+  lines.push("Phase 3 - Monitoring: monthly or quarterly checks for page drift, vendor edits, chatbot changes, new ads, and intake-script changes.");
   lines.push("");
   lines.push("Important disclaimer: This preliminary report is educational only. It is not legal advice, does not create an attorney-client relationship, and is not a compliance certification.");
   return lines;
