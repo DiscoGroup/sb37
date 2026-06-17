@@ -101,6 +101,10 @@ a {
   box-shadow: 0 10px 28px rgba(18, 25, 39, 0.08);
 }
 
+.top-scan-form input::placeholder {
+  color: #7a8794;
+}
+
 .small-links {
   display: flex;
   align-items: center;
@@ -803,6 +807,15 @@ select:focus {
 }
 
 @media (max-width: 920px) {
+  .top-scan-shell {
+    grid-template-columns: auto 1fr;
+  }
+
+  .top-scan-form {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+
   .hero,
   .assessment-grid,
   .risk-band,
@@ -827,14 +840,8 @@ select:focus {
 }
 
 @media (max-width: 640px) {
-  .coa-strip,
-  .top-scan-shell,
-  .small-links,
-  .site-footer {
-    flex-direction: column;
-  }
-
   .coa-strip {
+    display: none;
     align-items: center;
     text-align: center;
   }
@@ -843,31 +850,69 @@ select:focus {
   .top-scan-shell.simple {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 8px;
-    padding: 10px 16px;
+    gap: 10px;
+    padding: 10px 14px 12px;
+  }
+
+  .brand {
+    justify-content: center;
+  }
+
+  .brand img {
+    width: 128px;
+    height: 46px;
   }
 
   .top-scan-form {
     width: 100%;
     display: grid;
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .top-scan-form input,
+  .top-scan-form .button {
+    min-height: 50px;
+    width: 100%;
+    font-size: 16px;
   }
 
   .small-links {
     width: 100%;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
+    order: 3;
+  }
+
+  .small-links a {
+    font-size: 12px;
   }
 
   .hero-copy h1,
   .page-hero h1 {
-    font-size: 40px;
+    font-size: 36px;
   }
 
   .hero-lede,
   .page-hero p {
     font-size: 17px;
+  }
+
+  .hero {
+    padding: 28px 16px 36px;
+    gap: 24px;
+  }
+
+  .assessment-shell,
+  .packages,
+  .loop-section,
+  .delta-section,
+  .terms-layout,
+  .disclaimer-callout,
+  .page-hero {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .mini-grid,
