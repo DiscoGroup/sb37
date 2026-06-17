@@ -488,7 +488,7 @@ function categoryPreviewReason(category) {
     .map((finding) => findingTeasers[finding.id] || finding.label)
     .filter(Boolean);
   const uniqueTeasers = Array.from(new Set(teasers)).slice(0, 2);
-  const suffix = category.activeFindings.length > uniqueTeasers.length ? " Full trigger list is locked." : " Exact locations are locked.";
+  const suffix = category.activeFindings.length > uniqueTeasers.length ? " Additional signals may need review." : " Review this area in context.";
   return `${uniqueTeasers.join(" ")}${suffix}`;
 }
 
@@ -498,60 +498,12 @@ function renderMarketBoard(categoryScores) {
     <div class="review-row ${rowClass(category.percent)}">
       <div>
         <strong>${escapeHtml(category.name)}</strong>
-        <span>${category.percent < 100 ? "Locked delta available" : reviewLabel(category.percent)}</span>
+        <span>${reviewLabel(category.percent)}</span>
         <p>${escapeHtml(categoryPreviewReason(category))}</p>
       </div>
-      <div class="review-pill">${category.percent < 100 ? "Locked" : `${category.percent}%`}</div>
+      <div class="review-pill">${category.percent}%</div>
     </div>
   `).join("");
-}
-
-function renderReviewAreas(categoryScores) {
-  const needsReview = categoryScores.filter((category) => category.percent < 100).sort((a, b) => a.percent - b.percent).slice(0, 5);
-  if (!needsReview.length) {
-    return `
-      <ul class="report-list compact">
-        <li>No obvious public-facing gaps were surfaced in this pass. A full review can still verify pages, ads, chat, intake, vendors, and monitoring records.</li>
-      </ul>
-    `;
-  }
-
-  return `
-    <div class="locked-deltas">
-      ${needsReview.map((category, index) => `
-        <div class="locked-card ${rowClass(category.percent)}">
-          <div>
-            <span class="lock-label">Locked delta ${index + 1}</span>
-            <strong>${escapeHtml(category.name)}</strong>
-            <p>${escapeHtml(categoryPreviewReason(category))}</p>
-          </div>
-          <span class="lock-chip">Unlock</span>
-        </div>
-      `).join("")}
-    </div>
-  `;
-}
-
-function renderUnlockForm(website, scoreData) {
-  return `
-    <form class="unlock-form" id="unlockForm" data-website="${escapeHtml(website)}" data-score="${scoreData.score}">
-      <div>
-        <span class="lock-label">Unlock exact deltas</span>
-        <h4>Send the full trigger list</h4>
-        <p>Enter a work email and phone to request the page-level reasons, priority fixes, and monitoring package options.</p>
-      </div>
-      <label>
-        <span>Work email</span>
-        <input id="unlockEmail" type="email" autocomplete="email" placeholder="name@firm.com" required>
-      </label>
-      <label>
-        <span>Phone</span>
-        <input id="unlockPhone" type="tel" autocomplete="tel" placeholder="(555) 555-5555">
-      </label>
-      <button class="button primary" type="submit">Request unlock</button>
-      <p class="form-note unlock-note" id="unlockNote">Exact triggers, affected pages, and fix order stay locked until review.</p>
-    </form>
-  `;
 }
 
 function renderReport({ firmName, website, practice, scoreData }) {
@@ -570,8 +522,7 @@ function renderReport({ firmName, website, practice, scoreData }) {
           <span class="report-badge">${escapeHtml(levelLabel(scoreData.level))}</span>
           <h3>${escapeHtml(firmName || "Website")} scan complete</h3>
           <p>${escapeHtml(website)}</p>
-          <p class="form-note">Detected practice: ${escapeHtml(practice)}. Your free preview found locked SB37 deltas that need a closer look.</p>
-          <a class="button primary" href="mailto:compliance@sb37coa.com?subject=Unlock%20SB37%20Deltas&body=Please%20send%20pricing%20to%20unlock%20the%20full%20SB37%20delta%20report%20and%20book%20a%20COA%20review.">Unlock deltas</a>
+          <p class="form-note">Detected practice: ${escapeHtml(practice)}.</p>
         </div>
       </div>
       <div class="report-stats">
@@ -581,55 +532,13 @@ function renderReport({ firmName, website, practice, scoreData }) {
         <div class="report-stat"><strong>${scoreData.triggeredCount}</strong><span>Review flags</span></div>
       </div>
       <section>
-        <h4>Preview breakdown</h4>
+        <h4>Breakdown</h4>
         <div class="market-board">${renderMarketBoard(scoreData.categoryScores)}</div>
       </section>
-      <section>
-        <h4>Locked deltas</h4>
-        ${renderReviewAreas(scoreData.categoryScores)}
-      </section>
-      ${renderUnlockForm(website, scoreData)}
-      <section>
-        <h4>What unlock includes</h4>
-        <ul class="report-list">
-          <li>The exact deltas behind each locked category.</li>
-          <li>Priority fixes for pages, claims, vendors, intake, chat, and referrals.</li>
-          <li>A COA review path for monitoring and documentation.</li>
-        </ul>
-      </section>
-      <a class="button primary wide" href="mailto:compliance@sb37coa.com?subject=Unlock%20Full%20SB37%20Deltas&body=Please%20send%20pricing%20for%20the%20full%20delta%20report%20including%20chatbots%2C%20third-party%20vendors%2C%20intake%20scripts%2C%20and%20monitoring.">Unlock all deltas</a>
       <p class="form-note">Educational preliminary screen only. Not legal advice and not a compliance certification.</p>
     </div>
   `;
   animateScoreWheel(scoreData.score);
-  wireUnlockForm();
-}
-
-function wireUnlockForm() {
-  const unlockForm = document.querySelector("#unlockForm");
-  if (!unlockForm) return;
-
-  unlockForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const email = document.querySelector("#unlockEmail").value.trim();
-    const phone = document.querySelector("#unlockPhone").value.trim();
-    const website = unlockForm.dataset.website || "";
-    const score = unlockForm.dataset.score || "";
-    const body = [
-      "Please unlock the full SB37 delta report.",
-      "",
-      `Website: ${website}`,
-      `Preview score: ${score}`,
-      `Contact email: ${email}`,
-      `Phone: ${phone || "Not provided"}`,
-      "",
-      "Please send the exact triggers, affected pages, priority fixes, and package options."
-    ].join("\n");
-    window.location.href = `mailto:compliance@sb37coa.com?subject=${encodeURIComponent("Unlock SB37 Deltas")}&body=${encodeURIComponent(body)}`;
-
-    const note = document.querySelector("#unlockNote");
-    if (note) note.textContent = "Opening your email app with the unlock request. We will use this to route the full review.";
-  });
 }
 
 function animateScoreWheel(score) {
@@ -664,12 +573,8 @@ function animateScoreWheel(score) {
 }
 
 function setScanStatus(state, message) {
-  scanStatus.classList.remove("scanning", "warning");
-  if (state) scanStatus.classList.add(state);
-  scanStatus.innerHTML = `
-    <strong>${state === "scanning" ? "Scanning website..." : state === "warning" ? "Scan completed with limited extraction" : "Automatic scan checks every SB37 market"}</strong>
-    <span>${escapeHtml(message)}</span>
-  `;
+  if (!scanStatus) return;
+  scanStatus.textContent = message || state || "";
 }
 
 if (assessmentForm) {
@@ -697,7 +602,7 @@ if (assessmentForm) {
         filesScanned: 0,
         extractionStatus: "Limited scan: the site blocked or failed public text extraction, so the report used URL-level signals only"
       };
-      setScanStatus("warning", "The site blocked public extraction. The report still ran every category using URL-level signals, but a full COA review should inspect the site directly.");
+      setScanStatus("warning", "The site blocked public extraction. The report still ran every category using URL-level signals.");
     }
 
     const practice = inferPractice(scanData.sourceText, scanData.normalizedUrl);

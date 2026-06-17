@@ -355,6 +355,23 @@ a {
   padding: 76px 24px;
 }
 
+.scan-app .compact-report {
+  padding-top: 18px;
+  padding-bottom: 32px;
+}
+
+.compact-report .assessment-output {
+  gap: 0;
+}
+
+.compact-report .report-card {
+  min-height: calc(100vh - 128px);
+}
+
+.compact-report .report-empty {
+  min-height: calc(100vh - 190px);
+}
+
 .section-heading {
   max-width: 760px;
   margin-bottom: 28px;
@@ -1193,6 +1210,20 @@ select:focus {
   .page-hero {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .scan-app .compact-report {
+    padding-top: 12px;
+    padding-bottom: 20px;
+  }
+
+  .compact-report .report-card {
+    min-height: calc(100vh - 196px);
+    padding: 18px;
+  }
+
+  .compact-report .report-empty {
+    min-height: calc(100vh - 250px);
   }
 
   .mini-grid,
