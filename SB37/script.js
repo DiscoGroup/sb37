@@ -702,6 +702,26 @@ function renderProduceReportForm() {
   `;
 }
 
+function examplePageUrl(website, practice) {
+  const params = new URLSearchParams({
+    site: website,
+    practice
+  });
+  return `example.html?${params.toString()}`;
+}
+
+function renderExampleCta(website, practice) {
+  return `
+    <section class="example-cta-card">
+      <div>
+        <h4>100-score example</h4>
+        <p>Open a temporary example page showing how this firm's public marketing could look with clearer SB37-ready structure.</p>
+      </div>
+      <a class="button secondary" href="${escapeHtml(examplePageUrl(website, practice))}" target="_blank" rel="noopener">View 100 example</a>
+    </section>
+  `;
+}
+
 function renderReport({ firmName, website, practice, scoreData }) {
   const tone = scoreTone(scoreData.level);
   latestReportData = { firmName, website, practice, scoreData };
@@ -732,6 +752,7 @@ function renderReport({ firmName, website, practice, scoreData }) {
         <h4>Breakdown</h4>
         <div class="market-board">${renderMarketBoard(scoreData.categoryScores)}</div>
       </section>
+      ${renderExampleCta(website, practice)}
       ${renderProduceReportForm()}
       <p class="form-note">Educational preliminary screen only. Not legal advice and not a compliance certification.</p>
     </div>

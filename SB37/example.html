@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SB37 100-Score Example</title>
+    <meta name="description" content="Example SB37-ready law firm marketing page generated from a scanned website.">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="example-page">
+    <main class="example-shell">
+      <section class="example-hero">
+        <div class="example-brand-row">
+          <img id="firmIcon" alt="" aria-hidden="true">
+          <span id="firmName">Law Firm</span>
+          <strong>SB37-ready example</strong>
+        </div>
+        <div class="example-score">
+          <span>100</span>
+          <small>Example score</small>
+        </div>
+        <h1 id="exampleHeadline">Clear legal advertising with documented attorney accountability.</h1>
+        <p id="exampleSubhead">This example shows a cleaner structure for disclosures, claims, intake, AI/chat, vendors, and referral language.</p>
+        <div class="example-actions">
+          <a class="button primary" href="#exampleReview">Review structure</a>
+          <a class="button secondary" href="index.html">Run another scan</a>
+        </div>
+      </section>
+
+      <section class="example-grid" id="exampleReview">
+        <article>
+          <span>Disclosure placement</span>
+          <h2>Attorney advertising is clear before conversion.</h2>
+          <p>Attorney advertising. Prior results do not guarantee a similar outcome. No attorney-client relationship is formed by viewing this page or submitting a form.</p>
+        </article>
+        <article>
+          <span>Responsible attorney</span>
+          <h2>Ownership and supervision are obvious.</h2>
+          <p>Marketing content is reviewed under the supervision of a responsible California attorney before publication and during scheduled monitoring.</p>
+        </article>
+        <article>
+          <span>Claims and awards</span>
+          <h2>Claims are sourced and limited.</h2>
+          <p>Any award, ranking, result, or recovery reference includes source, date, selection criteria, and a nearby disclaimer explaining that each matter is different.</p>
+        </article>
+        <article>
+          <span>Intake and chat</span>
+          <h2>Forms avoid legal-advice confusion.</h2>
+          <p>Submissions are screened for conflicts and routed to attorney-supervised intake. Chat and forms do not provide legal advice or emergency assistance.</p>
+        </article>
+      </section>
+
+      <section class="example-band">
+        <h2>Example compliance language</h2>
+        <p>Information on this page is general advertising material. It is not legal advice and does not create an attorney-client relationship. A responsible attorney reviews marketing content, vendor-provided copy, intake scripts, and AI-assisted content before publication.</p>
+      </section>
+    </main>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const site = params.get("site") || "examplelaw.com";
+      const practice = params.get("practice") || "legal services";
+      let host = site.replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+      const cleanName = host.replace(/^www\./i, "").split(".")[0].replace(/[-_]+/g, " ");
+      const titleName = cleanName.replace(/\b\w/g, (letter) => letter.toUpperCase());
+      document.querySelector("#firmName").textContent = titleName;
+      document.querySelector("#firmIcon").src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
+      document.querySelector("#exampleHeadline").textContent = `${titleName} advertising with a 100-score SB37 structure.`;
+      document.querySelector("#exampleSubhead").textContent = `A simple ${practice.toLowerCase()} marketing page pattern with disclosures, attorney accountability, sourced claims, and supervised intake made easier to see.`;
+    </script>
+  </body>
+</html>
