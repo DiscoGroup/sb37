@@ -736,6 +736,13 @@ select:focus {
   font-size: 13px;
 }
 
+.review-row p {
+  max-width: 760px;
+  margin: 6px 0 0;
+  color: #3f4b5a;
+  font-size: 13px;
+}
+
 .review-row.watch {
   border-color: rgba(197, 106, 22, 0.35);
   background: #fff8ed;
@@ -840,6 +847,59 @@ select:focus {
   font-size: 13px;
   font-weight: 950;
   white-space: nowrap;
+}
+
+.unlock-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, 0.7fr) minmax(150px, 0.62fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 18px;
+  border: 1px solid rgba(7, 140, 134, 0.22);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f2fbfa 0%, #ffffff 58%, #fff7ef 100%);
+}
+
+.unlock-form h4 {
+  margin: 2px 0 4px;
+}
+
+.unlock-form p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.unlock-form label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.unlock-form input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: var(--white);
+  font: inherit;
+  font-size: 15px;
+  text-transform: none;
+}
+
+.unlock-form .button {
+  min-height: 46px;
+  white-space: nowrap;
+}
+
+.unlock-form .unlock-note {
+  grid-column: 1 / -1;
+  font-size: 12px;
 }
 
 .report-stats {
@@ -1170,6 +1230,12 @@ select:focus {
   }
 
   .market-row {
+    grid-template-columns: 1fr;
+  }
+
+  .review-row,
+  .locked-card,
+  .unlock-form {
     grid-template-columns: 1fr;
   }
 

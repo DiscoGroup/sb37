@@ -126,6 +126,29 @@ const signalRules = [
   { id: "unclearReferral", pattern: /\b(referral|referred|lead generator|matching service|legal network|find a lawyer|connect you with)\b/gi, evidence: "The site appears to reference referral, matching, lead-generator, or legal-network relationships." }
 ];
 
+const findingTeasers = {
+  missingResponsibleAttorney: "Responsible attorney or firm identity was not obvious in the scanned text.",
+  missingOfficeAddress: "Office or State Bar address signals were not obvious in the scanned text.",
+  missingAdDisclosure: "Advertising, spokesperson, dramatization, or result-disclaimer language was not obvious.",
+  settlementNoDisclaimer: "Result, settlement, verdict, recovery, or win language appeared in the preview.",
+  guaranteesOutcome: "Outcome-style, guarantee, quick-cash, or aggressive compensation language appeared.",
+  misleadingStats: "Recovery numbers, volume claims, percentages, or aggregate statistics appeared.",
+  unverifiedAwards: "Award, badge, ranking, or third-party rating language appeared.",
+  specialistClaims: "Best, top, expert, specialist, or superiority language appeared.",
+  aiAvatar: "Synthetic voice, avatar, virtual assistant, or generated-spokesperson language appeared.",
+  aiAttorneyLikeness: "AI lawyer, virtual lawyer, or automated legal-advice language appeared.",
+  massAiContent: "AI-generated, artificial intelligence, or automated-content language appeared.",
+  chatLegalAdvice: "Chat, case-evaluation, or legal-question intake language appeared.",
+  chatNoDisclaimer: "Chat/intake signals appeared without an obvious no-legal-advice disclaimer nearby.",
+  intakePromises: "Intake copy appears to promise help recovering, settling, or getting paid.",
+  nonAttorneyGuidance: "Non-attorney intake, case manager, call center, or representative language appeared.",
+  noSupervisionProcess: "Attorney supervision or script-review process language was not obvious.",
+  unreviewedSeo: "SEO, PPC, landing-page, sponsored, or lead-generation language appeared.",
+  noAttorneyOversight: "Attorney approval or oversight language for marketing content was not obvious.",
+  coBrandedPages: "Partner, network, affiliate, co-counsel, joint, or powered-by language appeared.",
+  unclearReferral: "Referral, referred, matching-service, legal-network, or lead-generator language appeared."
+};
+
 const MAX_DEEP_PAGES = 4;
 const MAX_FILE_URLS = 0;
 const CRAWL_BATCH_SIZE = 8;
@@ -456,6 +479,19 @@ function reviewLabel(percent) {
   return "Priority review";
 }
 
+function categoryPreviewReason(category) {
+  if (!category.activeFindings.length) {
+    return "No obvious preview signal triggered in this area.";
+  }
+
+  const teasers = category.activeFindings
+    .map((finding) => findingTeasers[finding.id] || finding.label)
+    .filter(Boolean);
+  const uniqueTeasers = Array.from(new Set(teasers)).slice(0, 2);
+  const suffix = category.activeFindings.length > uniqueTeasers.length ? " Full trigger list is locked." : " Exact locations are locked.";
+  return `${uniqueTeasers.join(" ")}${suffix}`;
+}
+
 function renderMarketBoard(categoryScores) {
   const ordered = [...categoryScores].sort((a, b) => a.percent - b.percent);
   return ordered.map((category) => `
@@ -463,6 +499,7 @@ function renderMarketBoard(categoryScores) {
       <div>
         <strong>${escapeHtml(category.name)}</strong>
         <span>${category.percent < 100 ? "Locked delta available" : reviewLabel(category.percent)}</span>
+        <p>${escapeHtml(categoryPreviewReason(category))}</p>
       </div>
       <div class="review-pill">${category.percent < 100 ? "Locked" : `${category.percent}%`}</div>
     </div>
@@ -486,12 +523,34 @@ function renderReviewAreas(categoryScores) {
           <div>
             <span class="lock-label">Locked delta ${index + 1}</span>
             <strong>${escapeHtml(category.name)}</strong>
-            <p>Preview found a signal worth reviewing. Unlock the full delta to see what triggered it and what to fix first.</p>
+            <p>${escapeHtml(categoryPreviewReason(category))}</p>
           </div>
           <span class="lock-chip">Unlock</span>
         </div>
       `).join("")}
     </div>
+  `;
+}
+
+function renderUnlockForm(website, scoreData) {
+  return `
+    <form class="unlock-form" id="unlockForm" data-website="${escapeHtml(website)}" data-score="${scoreData.score}">
+      <div>
+        <span class="lock-label">Unlock exact deltas</span>
+        <h4>Send the full trigger list</h4>
+        <p>Enter a work email and phone to request the page-level reasons, priority fixes, and monitoring package options.</p>
+      </div>
+      <label>
+        <span>Work email</span>
+        <input id="unlockEmail" type="email" autocomplete="email" placeholder="name@firm.com" required>
+      </label>
+      <label>
+        <span>Phone</span>
+        <input id="unlockPhone" type="tel" autocomplete="tel" placeholder="(555) 555-5555">
+      </label>
+      <button class="button primary" type="submit">Request unlock</button>
+      <p class="form-note unlock-note" id="unlockNote">Exact triggers, affected pages, and fix order stay locked until review.</p>
+    </form>
   `;
 }
 
@@ -529,6 +588,7 @@ function renderReport({ firmName, website, practice, scoreData }) {
         <h4>Locked deltas</h4>
         ${renderReviewAreas(scoreData.categoryScores)}
       </section>
+      ${renderUnlockForm(website, scoreData)}
       <section>
         <h4>What unlock includes</h4>
         <ul class="report-list">
@@ -542,6 +602,34 @@ function renderReport({ firmName, website, practice, scoreData }) {
     </div>
   `;
   animateScoreWheel(scoreData.score);
+  wireUnlockForm();
+}
+
+function wireUnlockForm() {
+  const unlockForm = document.querySelector("#unlockForm");
+  if (!unlockForm) return;
+
+  unlockForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const email = document.querySelector("#unlockEmail").value.trim();
+    const phone = document.querySelector("#unlockPhone").value.trim();
+    const website = unlockForm.dataset.website || "";
+    const score = unlockForm.dataset.score || "";
+    const body = [
+      "Please unlock the full SB37 delta report.",
+      "",
+      `Website: ${website}`,
+      `Preview score: ${score}`,
+      `Contact email: ${email}`,
+      `Phone: ${phone || "Not provided"}`,
+      "",
+      "Please send the exact triggers, affected pages, priority fixes, and package options."
+    ].join("\n");
+    window.location.href = `mailto:compliance@sb37coa.com?subject=${encodeURIComponent("Unlock SB37 Deltas")}&body=${encodeURIComponent(body)}`;
+
+    const note = document.querySelector("#unlockNote");
+    if (note) note.textContent = "Opening your email app with the unlock request. We will use this to route the full review.";
+  });
 }
 
 function animateScoreWheel(score) {
