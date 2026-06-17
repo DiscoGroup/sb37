@@ -444,6 +444,12 @@ function scoreTone(level) {
   return "alert";
 }
 
+function scoreColor(score) {
+  if (score >= 90) return "#27a76f";
+  if (score >= 60) return "#c56a16";
+  return "#b43b45";
+}
+
 function reviewLabel(percent) {
   if (percent >= 85) return "Looks stable";
   if (percent >= 60) return "Review suggested";
@@ -494,9 +500,10 @@ function renderReport({ firmName, website, practice, scoreData }) {
   reportCard.innerHTML = `
     <div class="report-result status-${tone}">
       <div class="score-hero">
-        <div class="score-ring ${tone}" style="--score: ${scoreData.score * 3.6}deg">
+        <div class="score-ring ${tone}" data-score="${scoreData.score}" style="--score: 0deg; --score-color: ${scoreColor(scoreData.score)}">
+          <div class="score-pointer" aria-hidden="true"></div>
           <div class="score-ring-core">
-            <strong>${scoreData.score}</strong>
+            <strong class="score-value">0</strong>
             <span>SB37 score</span>
           </div>
         </div>
@@ -534,6 +541,38 @@ function renderReport({ firmName, website, practice, scoreData }) {
       <p class="form-note">Educational preliminary screen only. Not legal advice and not a compliance certification.</p>
     </div>
   `;
+  animateScoreWheel(scoreData.score);
+}
+
+function animateScoreWheel(score) {
+  const ring = reportCard.querySelector(".score-ring");
+  const value = reportCard.querySelector(".score-value");
+  if (!ring || !value) return;
+
+  const duration = 1300;
+  const start = performance.now();
+  const target = Math.max(0, Math.min(100, score));
+
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function frame(now) {
+    const progress = Math.min(1, (now - start) / duration);
+    const eased = easeOutCubic(progress);
+    const currentScore = Math.round(target * eased);
+    const currentAngle = target * 3.6 * eased;
+    ring.style.setProperty("--score", `${currentAngle}deg`);
+    value.textContent = String(currentScore);
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      ring.style.setProperty("--score", `${target * 3.6}deg`);
+      value.textContent = String(target);
+    }
+  }
+
+  requestAnimationFrame(frame);
 }
 
 function setScanStatus(state, message) {

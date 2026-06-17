@@ -577,24 +577,52 @@ select:focus {
 }
 
 .score-ring {
+  position: relative;
   display: grid;
   place-items: center;
   width: 180px;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: conic-gradient(var(--green) 0 var(--score), #e3ebef var(--score) 360deg);
+  background:
+    conic-gradient(var(--score-color) 0 var(--score), #e3ebef var(--score) 360deg);
   box-shadow: 0 16px 44px rgba(18, 25, 39, 0.12);
 }
 
 .score-ring.watch {
-  background: conic-gradient(var(--warning) 0 var(--score), #e3ebef var(--score) 360deg);
+  background: conic-gradient(var(--score-color) 0 var(--score), #e3ebef var(--score) 360deg);
 }
 
 .score-ring.alert {
-  background: conic-gradient(var(--danger) 0 var(--score), #e3ebef var(--score) 360deg);
+  background: conic-gradient(var(--score-color) 0 var(--score), #e3ebef var(--score) 360deg);
+}
+
+.score-ring::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background:
+    conic-gradient(#b43b45 0 40%, #c56a16 40% 75%, #27a76f 75% 100%);
+  opacity: 0.16;
+}
+
+.score-pointer {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  z-index: 2;
+  width: 4px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--ink);
+  transform-origin: 50% 82px;
+  transform: translateX(-50%) rotate(calc(var(--score) - 180deg));
+  transition: transform 0.08s linear;
 }
 
 .score-ring-core {
+  position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   width: 128px;
