@@ -60,7 +60,7 @@ a {
 
 .top-scan-shell {
   display: grid;
-  grid-template-columns: auto minmax(280px, 1fr) auto;
+  grid-template-columns: auto 1fr minmax(360px, 520px);
   align-items: center;
   gap: 16px;
   max-width: 1180px;
@@ -91,6 +91,8 @@ a {
   grid-template-columns: minmax(180px, 1fr) auto;
   gap: 8px;
   align-items: center;
+  justify-self: end;
+  width: 100%;
 }
 
 .top-scan-form input {
