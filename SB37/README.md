@@ -38,10 +38,10 @@ The report displays a percentage-style risk board for each category. Some signal
 
 ## Pages
 
-- `index.html`: landing page, website test form, free assessment, report preview, package ladder.
+- `index.html`: landing page, automatic website scan form, inferred practice type, free assessment, report preview, package ladder.
 - `about.html`: public assessment deltas without internal scoring weights.
 - `terms.html`: starter TOS and disclaimer language for counsel review.
 
 ## Notes
 
-The free assessment is a front-end demo. It does not crawl a live website or certify compliance. Production launch should connect the form to a backend workflow, update the contact email, and have counsel review all legal language.
+The free assessment is a front-end demo. It attempts to extract readable homepage text through a public reader endpoint, infer practice type, and run all SB37 signal categories automatically. Some sites may block extraction or hide risk in scripts, chatbots, paid ads, third-party vendors, or intake workflows. Production launch should connect the form to a backend crawler/workflow, update the contact email, and have counsel review all legal language.

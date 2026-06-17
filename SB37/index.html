@@ -80,7 +80,7 @@
         <div class="section-heading">
           <p class="eyebrow">Free assessment</p>
           <h2>Paste a website and run a first-pass SB37 report.</h2>
-          <p>Start with the firm website. The free screen reviews visible site and workflow signals; the full review covers chatbots, vendor scripts, call recordings, referral partners, paid ads, and change monitoring.</p>
+          <p>Start with the firm website. The scan attempts to read the site, infer the practice area, and score every SB37 risk market automatically; the full review covers chatbots, vendor scripts, call recordings, referral partners, paid ads, and change monitoring.</p>
         </div>
 
         <div class="assessment-grid">
@@ -96,60 +96,12 @@
               <label for="firmName">Firm name</label>
               <input id="firmName" name="firmName" placeholder="Your law firm">
 
-              <label for="practice">Primary marketing focus</label>
-              <select id="practice" name="practice">
-                <option>Personal injury / mass tort</option>
-                <option>Employment</option>
-                <option>Family law</option>
-                <option>Criminal defense</option>
-                <option>Immigration</option>
-                <option>Estate planning</option>
-                <option>Other consumer legal services</option>
-              </select>
-
-              <div class="signal-board" aria-label="SB37 assessment signals">
-                <div class="signal-group">
-                  <h3>Disclosures</h3>
-                  <label><input type="checkbox" name="signals" value="missingResponsibleAttorney"> Missing responsible California attorney or firm name</label>
-                  <label><input type="checkbox" name="signals" value="missingOfficeAddress"> Missing bona fide office address or State Bar address signal</label>
-                  <label><input type="checkbox" name="signals" value="missingAdDisclosure"> Missing advertising, spokesperson, or dramatization disclosure</label>
-                </div>
-                <div class="signal-group">
-                  <h3>Claims</h3>
-                  <label><input type="checkbox" name="signals" value="settlementNoDisclaimer"> Settlement or verdict claims without context/disclaimer</label>
-                  <label><input type="checkbox" name="signals" value="guaranteesOutcome"> Guarantees, quick cash, immediate settlement, or outcome language</label>
-                  <label><input type="checkbox" name="signals" value="misleadingStats"> Recovery statistics, volume claims, or inflated numbers</label>
-                </div>
-                <div class="signal-group">
-                  <h3>Awards</h3>
-                  <label><input type="checkbox" name="signals" value="unverifiedAwards"> Awards, badges, or rankings without source/date</label>
-                  <label><input type="checkbox" name="signals" value="specialistClaims"> Specialist, expert, or best-lawyer claims needing support</label>
-                </div>
-                <div class="signal-group">
-                  <h3>AI and Synthetic</h3>
-                  <label><input type="checkbox" name="signals" value="aiAvatar"> AI avatar, synthetic voice, or generated spokesperson</label>
-                  <label><input type="checkbox" name="signals" value="aiAttorneyLikeness"> AI attorney likeness, testimonial, or impersonation risk</label>
-                  <label><input type="checkbox" name="signals" value="massAiContent"> Mass AI content pages or unreviewed AI copy</label>
-                </div>
-                <div class="signal-group">
-                  <h3>Chatbots and Intake</h3>
-                  <label><input type="checkbox" name="signals" value="chatLegalAdvice"> Chatbot gives legal advice or case-specific direction</label>
-                  <label><input type="checkbox" name="signals" value="chatNoDisclaimer"> Chatbot has no clear disclaimer or escalation rule</label>
-                  <label><input type="checkbox" name="signals" value="intakePromises"> Intake or call center promises outcomes</label>
-                  <label><input type="checkbox" name="signals" value="nonAttorneyGuidance"> Non-attorney staff gives legal guidance</label>
-                  <label><input type="checkbox" name="signals" value="noSupervisionProcess"> No documented supervision or script review process</label>
-                </div>
-                <div class="signal-group">
-                  <h3>Vendors and Referrals</h3>
-                  <label><input type="checkbox" name="signals" value="unreviewedSeo"> Unreviewed SEO, PPC, landing page, or lead-gen content</label>
-                  <label><input type="checkbox" name="signals" value="noAttorneyOversight"> No attorney approval rights before publication</label>
-                  <label><input type="checkbox" name="signals" value="coBrandedPages"> Co-branded pages or joint advertising</label>
-                  <label><input type="checkbox" name="signals" value="unclearReferral"> Unclear referral relationship or lead-generator ownership</label>
-                </div>
+              <div class="auto-scan-card" id="scanStatus">
+                <strong>Automatic scan checks every SB37 market</strong>
+                <span>Practice type, disclosures, case-result language, awards, AI/synthetic content, chatbot hints, intake language, vendor/referral signals, and attorney transparency.</span>
               </div>
 
-              <button class="button secondary wide" type="submit">Refresh report with selected signals</button>
-              <p class="form-note">This front-end demo does not crawl the live web. It models the screening flow and produces an educational preliminary report from your inputs.</p>
+              <p class="form-note">This free web scan is a preliminary screen. Some websites block extraction or hide chatbot/vendor workflows; the full COA review verifies those systems directly.</p>
             </fieldset>
           </form>
 
