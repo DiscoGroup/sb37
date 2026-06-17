@@ -541,7 +541,7 @@ select:focus {
   background:
     conic-gradient(from 0deg, var(--teal), var(--green), var(--poppy), var(--teal));
   box-shadow: 0 18px 50px rgba(18, 25, 39, 0.14);
-  animation: scanSpin 1.8s linear infinite;
+  animation: scanSpin 4.8s linear infinite;
 }
 
 .scan-orbit::before {
@@ -559,7 +559,7 @@ select:focus {
   color: var(--ink);
   font-weight: 950;
   letter-spacing: 0;
-  animation: scanSpin 1.8s linear infinite reverse;
+  animation: scanSpin 4.8s linear infinite reverse;
 }
 
 .scan-orbit span {
@@ -611,7 +611,7 @@ select:focus {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--teal), var(--green), var(--poppy));
-  animation: scanSweep 1.25s ease-in-out infinite;
+  animation: scanSweep 2.8s ease-in-out infinite;
 }
 
 .scan-phase {
@@ -659,7 +659,6 @@ select:focus {
   color: var(--white);
   border-color: var(--teal);
   background: var(--teal);
-  transform: translateY(-1px);
 }
 
 .scan-modules span.done {
@@ -972,6 +971,51 @@ select:focus {
 .review-row.alert .review-pill {
   color: #8f2630;
   background: #ffe0e3;
+}
+
+.produce-report-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(7, 140, 134, 0.24);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f2fbfa 0%, #ffffff 72%);
+}
+
+.produce-report-card h4 {
+  margin: 0 0 4px;
+}
+
+.produce-report-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.produce-report-card form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.produce-report-card label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.produce-report-card input {
+  min-height: 46px;
+  font-size: 15px;
+  text-transform: none;
+}
+
+.produce-report-card .button {
+  min-height: 46px;
+  white-space: nowrap;
 }
 
 .locked-deltas {
@@ -1450,7 +1494,8 @@ select:focus {
 
   .review-row,
   .locked-card,
-  .unlock-form {
+  .unlock-form,
+  .produce-report-card form {
     grid-template-columns: 1fr;
   }
 

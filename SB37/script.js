@@ -2,6 +2,7 @@ const assessmentForm = document.querySelector("#assessmentForm");
 const reportCard = document.querySelector("#reportCard");
 const scanStatus = document.querySelector("#scanStatus");
 let scanMotionTimer;
+let latestReportData;
 
 const categories = [
   {
@@ -535,14 +536,14 @@ function startScanMotion() {
     if (!phaseLabel || !percentLabel || !moduleChips.length) return;
 
     const phase = scanPhases[step % scanPhases.length];
-    const percent = Math.min(94, 8 + step * 9);
+    const percent = Math.min(94, 8 + step * 6);
     phaseLabel.textContent = phase;
     percentLabel.textContent = `${percent}%`;
     moduleChips.forEach((chip, index) => {
       chip.classList.toggle("active", index === step % moduleChips.length);
       chip.classList.toggle("done", index < step % (moduleChips.length + 1));
     });
-  }, 850);
+  }, 1450);
 }
 
 function stopScanMotion() {
@@ -577,8 +578,48 @@ function renderMarketBoard(categoryScores) {
   `).join("");
 }
 
+const categoryFixes = {
+  disclosures: "Place attorney advertising, responsible attorney, firm identity, office address, and disclaimer language in visible page-level locations.",
+  claims: "Pair every result, recovery, settlement, verdict, and compensation claim with nearby context and past-results disclaimer language.",
+  awards: "Add source, date, ranking body, eligibility criteria, and limitations near award, best, top, or specialist claims.",
+  ai: "Document attorney review for AI-assisted content and avoid any copy that implies automated legal advice or synthetic attorney endorsement.",
+  chatbot: "Add no-legal-advice and no-attorney-client language before chat or case-evaluation flows, with clear attorney escalation rules.",
+  intake: "Review intake scripts for outcome promises and document attorney supervision for non-attorney staff or call center workflows.",
+  vendor: "Require attorney approval before vendor-created SEO, PPC, landing pages, content updates, or lead-generation copy goes live.",
+  referral: "Clarify referral, co-counsel, partner, network, affiliate, and lead-generator relationships wherever those signals appear.",
+  transparency: "Make attorney identity, firm ownership, office location, and responsible-contact details easy to find from the scanned pages."
+};
+
+function renderProduceReportForm() {
+  return `
+    <section class="produce-report-card">
+      <div>
+        <h4>Produce report</h4>
+        <p>Enter contact details to generate a PDF with suggested changes from this scan.</p>
+      </div>
+      <form id="produceReportForm">
+        <label>
+          <span>Name</span>
+          <input id="reportName" type="text" autocomplete="name" placeholder="Full name" required>
+        </label>
+        <label>
+          <span>Email</span>
+          <input id="reportEmail" type="email" autocomplete="email" placeholder="name@firm.com" required>
+        </label>
+        <label>
+          <span>Phone</span>
+          <input id="reportPhone" type="tel" autocomplete="tel" placeholder="(555) 555-5555" required>
+        </label>
+        <button class="button primary" type="submit">Produce report</button>
+      </form>
+      <p class="form-note" id="produceReportNote">PDF generation runs in this browser for the current scan.</p>
+    </section>
+  `;
+}
+
 function renderReport({ firmName, website, practice, scoreData }) {
   const tone = scoreTone(scoreData.level);
+  latestReportData = { firmName, website, practice, scoreData };
   reportCard.innerHTML = `
     <div class="report-result status-${tone}">
       <div class="score-hero">
@@ -606,10 +647,159 @@ function renderReport({ firmName, website, practice, scoreData }) {
         <h4>Breakdown</h4>
         <div class="market-board">${renderMarketBoard(scoreData.categoryScores)}</div>
       </section>
+      ${renderProduceReportForm()}
       <p class="form-note">Educational preliminary screen only. Not legal advice and not a compliance certification.</p>
     </div>
   `;
   animateScoreWheel(scoreData.score);
+  wireProduceReportForm();
+}
+
+function reportLines(contact, reportData) {
+  const { website, practice, scoreData } = reportData;
+  const priorityCategories = scoreData.categoryScores
+    .filter((category) => category.percent < 100)
+    .sort((a, b) => a.percent - b.percent);
+  const lines = [
+    "SB37 COA Preview Report",
+    "",
+    `Website: ${website}`,
+    `Detected practice: ${practice}`,
+    `SB37 score: ${scoreData.score}`,
+    `Status: ${levelLabel(scoreData.level)}`,
+    `Prepared for: ${contact.name}`,
+    `Email: ${contact.email}`,
+    `Phone: ${contact.phone}`,
+    `Generated: ${new Date().toLocaleString()}`,
+    "",
+    "Scan Summary",
+    `Pages scanned: ${scoreData.pagesScanned}`,
+    `Signals checked: ${scoreData.signalsChecked}`,
+    `Modules run: ${scoreData.categoryScores.length}`,
+    `Words scanned: ${scoreData.wordsScanned}`,
+    "",
+    "Suggested Changes"
+  ];
+
+  if (!priorityCategories.length) {
+    lines.push("No obvious public-facing gaps were surfaced in this preview. Continue verifying disclosures, ads, chat, intake, vendor content, and monitoring records.");
+  }
+
+  priorityCategories.forEach((category, index) => {
+    lines.push("");
+    lines.push(`${index + 1}. ${category.name} (${category.percent}%)`);
+    lines.push(`Reason: ${categoryPreviewReason(category)}`);
+    lines.push(`Recommended change: ${categoryFixes[category.id] || "Review this category with California advertising counsel and document the remediation path."}`);
+  });
+
+  lines.push("");
+  lines.push("Important disclaimer: This preliminary report is educational only. It is not legal advice, does not create an attorney-client relationship, and is not a compliance certification.");
+  return lines;
+}
+
+function wrapPdfLine(line, maxLength = 88) {
+  const words = String(line).split(/\s+/);
+  const output = [];
+  let current = "";
+  words.forEach((word) => {
+    if (!current) {
+      current = word;
+    } else if (`${current} ${word}`.length <= maxLength) {
+      current = `${current} ${word}`;
+    } else {
+      output.push(current);
+      current = word;
+    }
+  });
+  output.push(current);
+  return output;
+}
+
+function escapePdfText(value) {
+  return String(value)
+    .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)");
+}
+
+function buildPdfBlob(lines) {
+  const pageLines = [];
+  let currentPage = [];
+  lines.forEach((line) => {
+    const wrapped = line ? wrapPdfLine(line) : [""];
+    wrapped.forEach((wrappedLine) => {
+      if (currentPage.length >= 48) {
+        pageLines.push(currentPage);
+        currentPage = [];
+      }
+      currentPage.push(wrappedLine);
+    });
+  });
+  if (currentPage.length) pageLines.push(currentPage);
+
+  const objects = [null];
+  const addObject = (body) => {
+    objects.push(body);
+    return objects.length - 1;
+  };
+  const catalogId = addObject("");
+  const pagesId = addObject("");
+  const fontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  const pageIds = [];
+
+  pageLines.forEach((page) => {
+    const text = page.map((line) => `(${escapePdfText(line)}) Tj T*`).join("\n");
+    const stream = `BT /F1 10 Tf 50 760 Td 14 TL\n${text}\nET`;
+    const contentId = addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+    const pageId = addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontId} 0 R >> >> /Contents ${contentId} 0 R >>`);
+    pageIds.push(pageId);
+  });
+
+  objects[catalogId] = `<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
+  objects[pagesId] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageIds.length} >>`;
+
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  for (let index = 1; index < objects.length; index += 1) {
+    offsets[index] = pdf.length;
+    pdf += `${index} 0 obj\n${objects[index]}\nendobj\n`;
+  }
+  const xrefOffset = pdf.length;
+  pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+  for (let index = 1; index < objects.length; index += 1) {
+    pdf += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
+  }
+  pdf += `trailer\n<< /Size ${objects.length} /Root ${catalogId} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  return new Blob([pdf], { type: "application/pdf" });
+}
+
+function wireProduceReportForm() {
+  const form = document.querySelector("#produceReportForm");
+  if (!form) return;
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!latestReportData) return;
+
+    const contact = {
+      name: document.querySelector("#reportName").value.trim(),
+      email: document.querySelector("#reportEmail").value.trim(),
+      phone: document.querySelector("#reportPhone").value.trim()
+    };
+    const lines = reportLines(contact, latestReportData);
+    const blob = buildPdfBlob(lines);
+    const link = document.createElement("a");
+    const domain = latestReportData.website.replace(/^https?:\/\//i, "").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "sb37-report";
+    link.href = URL.createObjectURL(blob);
+    link.download = `${domain}-sb37-preview-report.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+
+    const note = document.querySelector("#produceReportNote");
+    if (note) note.textContent = "PDF created. Check your downloads folder.";
+  });
 }
 
 function animateScoreWheel(score) {
