@@ -20,7 +20,7 @@ const categories = [
     name: "Case Results & Success Claims",
     weight: 15,
     findings: [
-      { id: "settlementNoDisclaimer", penalty: 10, label: "Settlement or verdict claims without context/disclaimer" },
+      { id: "settlementNoDisclaimer", penalty: 10, label: "Settlement, verdict, recovery, or result claims needing page-level context" },
       { id: "guaranteesOutcome", penalty: 15, label: "Guarantees, quick cash, immediate settlement, or outcome language" },
       { id: "misleadingStats", penalty: 15, label: "Misleading recovery statistics, volume claims, or inflated numbers" }
     ]
@@ -124,15 +124,15 @@ const signalRules = [
   { id: "noSupervisionProcess", type: "missing", pattern: /\b(attorney reviewed|reviewed by an attorney|supervised by|attorney supervision|approved by)\b/gi, evidence: "No obvious attorney review or supervision process language was detected." },
   { id: "unreviewedSeo", pattern: /\b(seo|landing page|lead generation|lead generator|ppc|google ads|sponsored|advertising partner)\b/gi, evidence: "The site appears to reference paid ads, SEO, landing pages, or lead-generation concepts." },
   { id: "noAttorneyOversight", type: "missing", pattern: /\b(attorney reviewed|approved by attorney|attorney oversight|responsible attorney|supervised by)\b/gi, evidence: "No obvious attorney oversight or approval language was detected." },
-  { id: "coBrandedPages", pattern: /\b(partner|co-counsel|network|affiliate|joint|sponsored by|in partnership with|powered by)\b/gi, evidence: "The site appears to reference partner, network, affiliate, co-counsel, or powered-by relationships." },
-  { id: "unclearReferral", pattern: /\b(referral|referred|lead generator|matching service|legal network|find a lawyer|connect you with)\b/gi, evidence: "The site appears to reference referral, matching, lead-generator, or legal-network relationships." }
+  { id: "coBrandedPages", pattern: /\b(co-counsel|affiliate|joint advertising|joint ad|sponsored by|in partnership with|powered by|partner network|advertising partner|marketing partner)\b/gi, evidence: "The site appears to reference partner, network, affiliate, co-counsel, or powered-by relationships." },
+  { id: "unclearReferral", pattern: /\b(referral|lead generator|matching service|legal network|find a lawyer|connect you with|referred by|referred to us)\b/gi, evidence: "The site appears to reference referral, matching, lead-generator, or legal-network relationships." }
 ];
 
 const findingTeasers = {
   missingResponsibleAttorney: "Responsible attorney or firm identity was not obvious in the scanned text.",
   missingOfficeAddress: "Office or State Bar address signals were not obvious in the scanned text.",
   missingAdDisclosure: "Advertising, spokesperson, dramatization, or result-disclaimer language was not obvious.",
-  settlementNoDisclaimer: "Result, settlement, verdict, recovery, or win language appeared in the preview.",
+  settlementNoDisclaimer: "Result, settlement, verdict, recovery, or win language appeared; disclaimer context is checked separately.",
   guaranteesOutcome: "Outcome-style, guarantee, quick-cash, or aggressive compensation language appeared.",
   misleadingStats: "Recovery numbers, volume claims, percentages, or aggregate statistics appeared.",
   unverifiedAwards: "Award, badge, ranking, or third-party rating language appeared.",
@@ -151,14 +151,18 @@ const findingTeasers = {
   unclearReferral: "Referral, referred, matching-service, legal-network, or lead-generator language appeared."
 };
 
-const MAX_DEEP_PAGES = 4;
-const MAX_FILE_URLS = 0;
-const CRAWL_BATCH_SIZE = 8;
-const PAGE_TIMEOUT_MS = 2600;
-const FILE_TIMEOUT_MS = 2600;
+const MAX_SECOND_PASS_PAGES = 6;
+const MAX_COMPLIANCE_PROBES = 8;
+const MAX_LINKED_PAGES = 14;
+const MAX_FILE_URLS = 3;
+const CRAWL_BATCH_SIZE = 6;
+const HOMEPAGE_TIMEOUT_MS = 6500;
+const PAGE_TIMEOUT_MS = 4200;
+const FILE_TIMEOUT_MS = 4200;
 const scanPhases = [
   "Normalizing domain and security headers",
   "Discovering sitemap and priority internal pages",
+  "Probing disclaimer, terms, attorney, and results URLs",
   "Reading homepage, header, footer, and schema",
   "Checking attorney identity and office signals",
   "Parsing disclaimers, terms, and advertising language",
@@ -206,8 +210,16 @@ function htmlToText(raw) {
     .trim();
 }
 
-function isLikelyDisclosureLink(url) {
-  return /\b(disclaimer|terms|privacy|contact|about|attorney|lawyer|team|firm|state-bar|statebar|bar|profile|bio)\b/i.test(url);
+function urlPriorityScore(url) {
+  let score = 0;
+  const lowerUrl = url.toLowerCase();
+  if (/\b(disclaimer|terms|privacy|attorney-advertising|advertising-disclaimer|legal-notice)\b/i.test(lowerUrl)) score -= 80;
+  if (/\b(about|about-us|attorneys|our-attorneys|team|firm|contact|profile|bio|state-bar|statebar|calbar)\b/i.test(lowerUrl)) score -= 60;
+  if (/\b(results|case-results|verdicts|settlements|testimonials|reviews|awards|media|press)\b/i.test(lowerUrl)) score -= 40;
+  if (/\b(chat|intake|consultation|free-case-evaluation|referral|partners|co-counsel)\b/i.test(lowerUrl)) score -= 25;
+  if (/\b(blog|news|article|category|tag|author|page\/[0-9]+)\b/i.test(lowerUrl)) score += 25;
+  if (/\b(lawyer|attorney)\b/i.test(lowerUrl) && !/\b(attorneys|our-attorneys|attorney-advertising)\b/i.test(lowerUrl)) score += 12;
+  return score;
 }
 
 function isProbablyHtmlPage(url) {
@@ -243,11 +255,47 @@ function extractLinkedUrls(raw, baseUrl) {
 
 function prioritizeUrls(urls) {
   return Array.from(new Set(urls)).sort((a, b) => {
-    const aDisclosure = isLikelyDisclosureLink(a) ? 0 : 1;
-    const bDisclosure = isLikelyDisclosureLink(b) ? 0 : 1;
-    if (aDisclosure !== bDisclosure) return aDisclosure - bDisclosure;
+    const priorityDelta = urlPriorityScore(a) - urlPriorityScore(b);
+    if (priorityDelta !== 0) return priorityDelta;
     return a.length - b.length;
   });
+}
+
+function commonComplianceUrls(baseUrl, linkedUrls = []) {
+  const base = new URL(baseUrl);
+  const sameSiteLink = linkedUrls.find((url) => {
+    try {
+      const linked = new URL(url);
+      return linked.hostname.replace(/^www\./, "") === base.hostname.replace(/^www\./, "");
+    } catch (error) {
+      return false;
+    }
+  });
+  const origin = sameSiteLink ? new URL(sameSiteLink).origin : base.origin;
+  return [
+    "/disclaimer/",
+    "/disclaimer",
+    "/legal-disclaimer/",
+    "/attorney-advertising/",
+    "/terms/",
+    "/terms-of-use/",
+    "/privacy-policy/",
+    "/privacy/",
+    "/about/",
+    "/about-us/",
+    "/attorneys/",
+    "/our-attorneys/",
+    "/team/",
+    "/contact/",
+    "/results/",
+    "/case-results/",
+    "/testimonials/"
+  ].map((path) => `${origin}${path}`);
+}
+
+function isLikelyUsefulPage(page) {
+  if (!page || !page.text || page.text.length < 80) return false;
+  return !/\b(404|page not found|not found|nothing found|this page could not be found)\b/i.test(page.text.slice(0, 700));
 }
 
 async function fetchRawUrl(url, timeoutMs = PAGE_TIMEOUT_MS) {
@@ -308,19 +356,32 @@ async function fetchWithTimeout(url, timeoutMs = 12000) {
 async function extractOnePage(url, timeoutMs = 12000) {
   const allOriginsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
   const readerUrl = `https://r.jina.ai/http://${url}`;
-  const [html, readable] = await Promise.allSettled([
+  const parsedUrl = new URL(url);
+  const alternateReaderUrl = `https://r.jina.ai/http://${parsedUrl.host}${parsedUrl.pathname}`;
+  const [html, readable, alternateReadable] = await Promise.allSettled([
     fetchWithTimeout(allOriginsUrl, timeoutMs),
-    fetchWithTimeout(readerUrl, timeoutMs)
+    fetchWithTimeout(readerUrl, timeoutMs),
+    fetchWithTimeout(alternateReaderUrl, timeoutMs)
   ]);
   const rawHtml = html.status === "fulfilled" ? html.value : "";
   const readerText = readable.status === "fulfilled" ? readable.value : "";
-  const text = `${htmlToText(rawHtml)} ${readerText}`.replace(/\s+/g, " ").trim();
+  const alternateReaderText = alternateReadable.status === "fulfilled" ? alternateReadable.value : "";
+  const text = `${htmlToText(rawHtml)} ${readerText} ${alternateReaderText}`.replace(/\s+/g, " ").trim();
   return { rawHtml, text };
 }
 
 async function readWebsiteText(url) {
-  const normalized = normalizeWebsite(url);
-  const homepage = await extractOnePage(normalized);
+  let normalized = normalizeWebsite(url);
+  let homepage = await extractOnePage(normalized, HOMEPAGE_TIMEOUT_MS);
+  if ((!homepage.text || homepage.text.length < 80) && !new URL(normalized).hostname.startsWith("www.")) {
+    const retryUrl = new URL(normalized);
+    retryUrl.hostname = `www.${retryUrl.hostname}`;
+    const retryHomepage = await extractOnePage(retryUrl.href, HOMEPAGE_TIMEOUT_MS);
+    if (retryHomepage.text && retryHomepage.text.length >= 80) {
+      normalized = retryUrl.href;
+      homepage = retryHomepage;
+    }
+  }
   if (!homepage.text || homepage.text.length < 80) {
     throw new Error("Website extraction failed");
   }
@@ -329,18 +390,33 @@ async function readWebsiteText(url) {
 
   const sitemapUrls = await discoverSitemapUrls(normalized);
   const homepageLinks = extractLinkedUrls(`${homepage.rawHtml} ${homepage.text}`, normalized);
-  const fileUrls = prioritizeUrls(sitemapUrls.concat(homepageLinks)).filter(isTextFileUrl).slice(0, MAX_FILE_URLS);
-  const pageUrls = prioritizeUrls(sitemapUrls.concat(homepageLinks))
+  const linkedCandidates = prioritizeUrls(sitemapUrls.concat(homepageLinks));
+  const complianceProbeUrls = prioritizeUrls(commonComplianceUrls(normalized, linkedCandidates)).slice(0, MAX_COMPLIANCE_PROBES);
+  const linkedPageUrls = linkedCandidates
     .filter((linkedUrl) => linkedUrl !== normalized && isProbablyHtmlPage(linkedUrl))
-    .slice(0, MAX_DEEP_PAGES);
+    .slice(0, MAX_LINKED_PAGES);
+  const firstPassCandidates = prioritizeUrls(complianceProbeUrls.concat(linkedPageUrls));
+  const fileUrls = linkedCandidates.concat(complianceProbeUrls).filter(isTextFileUrl).slice(0, MAX_FILE_URLS);
+  const pageUrls = firstPassCandidates
+    .filter((linkedUrl) => linkedUrl !== normalized && isProbablyHtmlPage(linkedUrl))
+    .slice(0, MAX_COMPLIANCE_PROBES + MAX_LINKED_PAGES);
 
-  if (scanStatus) setScanStatus("scanning", `Building preview from ${pageUrls.length + 1} key pages and ${fileUrls.length} file URLs.`);
+  if (scanStatus) setScanStatus("scanning", `Building preview from ${pageUrls.length + 1} priority pages and ${fileUrls.length} file URLs.`);
 
   const pageResults = await runInBatches(pageUrls, CRAWL_BATCH_SIZE, (link) => extractOnePage(link, PAGE_TIMEOUT_MS));
   const successfulPages = pageResults
     .filter((result) => result.status === "fulfilled")
     .map((result) => result.value)
-    .filter((page) => page.text && page.text.length >= 40);
+    .filter(isLikelyUsefulPage);
+
+  const secondPassLinks = prioritizeUrls(successfulPages.flatMap((page) => extractLinkedUrls(`${page.rawHtml} ${page.text}`, normalized)))
+    .filter((linkedUrl) => linkedUrl !== normalized && !pageUrls.includes(linkedUrl) && isProbablyHtmlPage(linkedUrl))
+    .slice(0, MAX_SECOND_PASS_PAGES);
+  const secondPassResults = await runInBatches(secondPassLinks, CRAWL_BATCH_SIZE, (link) => extractOnePage(link, PAGE_TIMEOUT_MS));
+  const successfulSecondPassPages = secondPassResults
+    .filter((result) => result.status === "fulfilled")
+    .map((result) => result.value)
+    .filter(isLikelyUsefulPage);
 
   const fileResults = await runInBatches(fileUrls, CRAWL_BATCH_SIZE, (link) => fetchWithTimeout(`https://r.jina.ai/http://${link}`, FILE_TIMEOUT_MS));
   const successfulFiles = fileResults
@@ -348,20 +424,22 @@ async function readWebsiteText(url) {
     .map((result) => result.value);
 
   const combinedText = [homepage.text]
-    .concat(successfulPages.map((page) => page.text), successfulFiles)
+    .concat(successfulPages.map((page) => page.text), successfulSecondPassPages.map((page) => page.text), successfulFiles)
     .join(" ")
     .replace(/\s+/g, " ")
     .trim();
 
-  const pagesScanned = 1 + successfulPages.length;
+  const pagesScanned = 1 + successfulPages.length + successfulSecondPassPages.length;
   const filesScanned = successfulFiles.length;
+  const urlsChecked = 1 + pageUrls.length + secondPassLinks.length + fileUrls.length;
 
   return {
     normalizedUrl: normalized,
     sourceText: combinedText.slice(0, 450000),
     pagesScanned,
     filesScanned,
-    extractionStatus: `Preview scan checked ${pagesScanned} key pages${filesScanned ? ` and ${filesScanned} file URLs` : ""}`
+    urlsChecked,
+    extractionStatus: `Preview scan checked ${urlsChecked} URLs and analyzed ${pagesScanned} readable pages${filesScanned ? ` plus ${filesScanned} file URLs` : ""}`
   };
 }
 
@@ -409,13 +487,19 @@ function detectSignals(text, url) {
 
 function scoreCategory(category, signals) {
   const activeFindings = category.findings.filter((finding) => signals.has(finding.id));
-  const rawPenalty = activeFindings.reduce((sum, finding) => sum + finding.penalty, 0);
+  const rawPenalty = activeFindings.reduce((sum, finding) => {
+    const hasDisclosureContext = !signals.has("missingAdDisclosure");
+    const adjustedPenalty = finding.id === "settlementNoDisclaimer" && hasDisclosureContext
+      ? Math.min(finding.penalty, 4)
+      : finding.penalty;
+    return sum + adjustedPenalty;
+  }, 0);
   const cappedPenalty = Math.min(category.weight, rawPenalty);
   const percent = Math.max(0, Math.round(((category.weight - cappedPenalty) / category.weight) * 100));
   return { ...category, activeFindings, rawPenalty, cappedPenalty, percent };
 }
 
-function scoreAssessment({ signals, url, sourceText, evidence, extractionStatus, pagesScanned = 1, filesScanned = 0 }) {
+function scoreAssessment({ signals, url, sourceText, evidence, extractionStatus, pagesScanned = 1, filesScanned = 0, urlsChecked = pagesScanned }) {
   const categoryScores = categories.map((category) => scoreCategory(category, signals));
   let totalPenalty = categoryScores.reduce((sum, category) => sum + category.cappedPenalty, 0);
   const inferredFindings = [];
@@ -453,6 +537,7 @@ function scoreAssessment({ signals, url, sourceText, evidence, extractionStatus,
     extractionStatus,
     pagesScanned,
     filesScanned,
+    urlsChecked,
     wordsScanned: sourceText.split(/\s+/).filter(Boolean).length,
     signalsChecked: signalRules.length,
     triggeredCount: signals.size + inferredFindings.length
@@ -517,8 +602,8 @@ function renderScanProgress(website) {
         `).join("")}
       </div>
       <div class="scan-console" aria-hidden="true">
-        <span>crawler.queue: homepage, sitemap, disclosures, attorney pages</span>
-        <span>extractors: html, schema, readable text, footer/header copy</span>
+        <span>crawler.queue: homepage, sitemap, disclaimers, attorneys, results</span>
+        <span>extractors: html, schema, readable text, header/footer, second pass</span>
         <span>markets: ${signalRules.length} signals across ${categories.length} SB37 modules</span>
       </div>
     </div>
@@ -638,9 +723,9 @@ function renderReport({ firmName, website, practice, scoreData }) {
         </div>
       </div>
       <div class="report-stats">
-        <div class="report-stat"><strong>${scoreData.pagesScanned}</strong><span>Pages scanned</span></div>
+        <div class="report-stat"><strong>${scoreData.urlsChecked}</strong><span>URLs checked</span></div>
+        <div class="report-stat"><strong>${scoreData.pagesScanned}</strong><span>Pages analyzed</span></div>
         <div class="report-stat"><strong>${scoreData.signalsChecked}</strong><span>Signals checked</span></div>
-        <div class="report-stat"><strong>${scoreData.categoryScores.length}</strong><span>Modules run</span></div>
         <div class="report-stat"><strong>${scoreData.wordsScanned}</strong><span>Words scanned</span></div>
       </div>
       <section>
@@ -673,7 +758,8 @@ function reportLines(contact, reportData) {
     `Generated: ${new Date().toLocaleString()}`,
     "",
     "Scan Summary",
-    `Pages scanned: ${scoreData.pagesScanned}`,
+    `URLs checked: ${scoreData.urlsChecked}`,
+    `Pages analyzed: ${scoreData.pagesScanned}`,
     `Signals checked: ${scoreData.signalsChecked}`,
     `Modules run: ${scoreData.categoryScores.length}`,
     `Words scanned: ${scoreData.wordsScanned}`,
@@ -863,6 +949,7 @@ if (assessmentForm) {
         sourceText: normalizedWebsite,
         pagesScanned: 0,
         filesScanned: 0,
+        urlsChecked: 1,
         extractionStatus: "Limited scan: the site blocked or failed public text extraction, so the report used URL-level signals only"
       };
       setScanStatus("warning", "The site blocked public extraction. The report still ran every category using URL-level signals.");
@@ -877,7 +964,8 @@ if (assessmentForm) {
       evidence,
       extractionStatus: scanData.extractionStatus,
       pagesScanned: scanData.pagesScanned,
-      filesScanned: scanData.filesScanned
+      filesScanned: scanData.filesScanned,
+      urlsChecked: scanData.urlsChecked
     });
 
     renderReport({ firmName, website: scanData.normalizedUrl, practice, scoreData });
