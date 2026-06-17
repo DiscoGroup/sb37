@@ -104,9 +104,9 @@ const practiceRules = [
 ];
 
 const signalRules = [
-  { id: "missingResponsibleAttorney", type: "missing", pattern: /\b(attorney advertising|responsible attorney|principal attorney|law offices of|law firm|esq\.|attorney at law)\b/gi, evidence: "No obvious responsible attorney or firm identity phrase was detected in the extracted text." },
-  { id: "missingOfficeAddress", type: "missing", pattern: /\b(\d{2,6}\s+[a-z0-9.' -]+\s+(street|st\.|avenue|ave\.|boulevard|blvd\.|road|rd\.|drive|dr\.|suite|ste\.|floor|fl\.|california| ca )|state bar)\b/gi, evidence: "No obvious office address or State Bar address signal was detected in the extracted text." },
-  { id: "missingAdDisclosure", type: "missing", pattern: /\b(advertisement|attorney advertising|actor portrayal|dramatization|spokesperson|paid spokesperson|results may vary|past results)\b/gi, evidence: "No obvious advertising, dramatization, spokesperson, or results disclaimer language was detected." },
+  { id: "missingResponsibleAttorney", type: "missing", pattern: /\b(attorney advertising|responsible attorney|principal attorney|law offices of|law firm|lawyer|lawyers|legalservice|founder|founding partner|managing partner|esq\.|attorney at law|state bar-certified|certified criminal law specialist)\b/gi, evidence: "No obvious responsible attorney or firm identity phrase was detected in the extracted text." },
+  { id: "missingOfficeAddress", type: "missing", pattern: /\b(\d{2,6}\s+[a-z0-9.' -]+\s+(street|st\.|avenue|ave\.|boulevard|blvd\.|road|rd\.|drive|dr\.|way|court|ct\.|place|pl\.|lane|ln\.|suite|ste\.|floor|fl\.)|streetaddress|addresslocality|addressregion|postalcode|postal address|state bar|calbar)\b/gi, evidence: "No obvious office address or State Bar address signal was detected in the extracted text." },
+  { id: "missingAdDisclosure", type: "missing", pattern: /\b(advertisement|attorney advertising|actor portrayal|dramatization|spokesperson|paid spokesperson|results may vary|past results|no guarantee|not a guarantee|does not guarantee|not legal advice|does not create an attorney-client relationship|disclaimer)\b/gi, evidence: "No obvious advertising, dramatization, spokesperson, or results disclaimer language was detected." },
   { id: "settlementNoDisclaimer", pattern: /\b(\$[0-9][0-9,.]*\s*(million|m|k)?|settlement|verdict|recovered|recovery|won|results)\b/gi, evidence: "The site appears to discuss settlements, verdicts, recoveries, wins, or case results." },
   { id: "guaranteesOutcome", pattern: /\b(guarantee|guaranteed|no win no fee|win your case|maximum compensation|quick cash|cash now|immediate settlement|fast settlement|we will get you)\b/gi, evidence: "The site appears to use outcome, guarantee, quick-cash, or aggressive compensation language." },
   { id: "misleadingStats", pattern: /\b([0-9]+%\s*(success|win|settlement)|over\s+\$?[0-9][0-9,.]*|millions recovered|billions recovered|[0-9]+\+?\s*(cases|clients|settlements))\b/gi, evidence: "The site appears to use statistics, volume claims, or aggregate recovery numbers." },
@@ -153,45 +153,91 @@ function topMatches(text, pattern, limit = 3) {
     .slice(0, limit);
 }
 
+function htmlToText(raw) {
+  return raw.replace(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi, (match, attrs, content) => (
+      /application\/ld\+json/i.test(attrs) ? ` ${content} ` : " "
+    ))
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isLikelyDisclosureLink(url) {
+  return /\b(disclaimer|terms|privacy|contact|about|attorney|lawyer|team|firm|state-bar|statebar|bar|profile|bio)\b/i.test(url);
+}
+
+function extractInternalLinks(raw, baseUrl) {
+  const hrefLinks = Array.from(raw.matchAll(/\bhref\s*=\s*["']?([^"'\s>]+)/gi)).map((match) => match[1]);
+  const markdownLinks = Array.from(raw.matchAll(/\]\(([^)]+)\)/g)).map((match) => match[1]);
+  const jsonLinks = Array.from(raw.matchAll(/"url"\s*:\s*"([^"]+)"/gi)).map((match) => match[1].replaceAll("\\/", "/"));
+  const links = hrefLinks.concat(markdownLinks, jsonLinks)
+    .filter((href) => href && !href.startsWith("#") && !href.startsWith("mailto:") && !href.startsWith("tel:"));
+
+  const base = new URL(baseUrl);
+  return Array.from(new Set(links.map((href) => {
+    try {
+      return new URL(href, base).href.split("#")[0];
+    } catch (error) {
+      return "";
+    }
+  }))).filter((href) => {
+    try {
+      const linked = new URL(href);
+      return linked.hostname.replace(/^www\./, "") === base.hostname.replace(/^www\./, "") && isLikelyDisclosureLink(href);
+    } catch (error) {
+      return false;
+    }
+  }).slice(0, 6);
+}
+
+async function fetchWithTimeout(url, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+    if (!response.ok) return "";
+    return await response.text();
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+async function extractOnePage(url, timeoutMs = 12000) {
+  const allOriginsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  const readerUrl = `https://r.jina.ai/http://${url}`;
+  const [html, readable] = await Promise.allSettled([
+    fetchWithTimeout(allOriginsUrl, timeoutMs),
+    fetchWithTimeout(readerUrl, timeoutMs)
+  ]);
+  const rawHtml = html.status === "fulfilled" ? html.value : "";
+  const readerText = readable.status === "fulfilled" ? readable.value : "";
+  const text = `${htmlToText(rawHtml)} ${readerText}`.replace(/\s+/g, " ").trim();
+  return { rawHtml, text };
+}
+
 async function readWebsiteText(url) {
   const normalized = normalizeWebsite(url);
-  const attempts = [
-    {
-      url: `https://r.jina.ai/http://${normalized}`,
-      status: "Extracted homepage text through public reader"
-    },
-    {
-      url: `https://api.allorigins.win/raw?url=${encodeURIComponent(normalized)}`,
-      status: "Extracted homepage HTML through public CORS reader"
-    }
-  ];
-
-  for (const attempt of attempts) {
-    try {
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 12000);
-      const response = await fetch(attempt.url, { cache: "no-store", signal: controller.signal });
-      window.clearTimeout(timeout);
-      if (!response.ok) continue;
-      const raw = await response.text();
-      const text = raw.replace(/<script[\s\S]*?<\/script>/gi, " ")
-        .replace(/<style[\s\S]*?<\/style>/gi, " ")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-      if (text && text.length >= 80) {
-        return {
-          normalizedUrl: normalized,
-          sourceText: text.slice(0, 120000),
-          extractionStatus: attempt.status
-        };
-      }
-    } catch (error) {
-      // Try the next public extraction route before falling back to URL-level signals.
-    }
+  const homepage = await extractOnePage(normalized);
+  if (!homepage.text || homepage.text.length < 80) {
+    throw new Error("Website extraction failed");
   }
 
-  throw new Error("Website extraction failed");
+  const disclosureLinks = extractInternalLinks(`${homepage.rawHtml} ${homepage.text}`, normalized);
+  const pageResults = await Promise.allSettled(disclosureLinks.map((link) => extractOnePage(link, 6000)));
+  const extraText = pageResults
+    .filter((result) => result.status === "fulfilled")
+    .map((result) => result.value.text)
+    .join(" ");
+  const combinedText = `${homepage.text} ${extraText}`.replace(/\s+/g, " ").trim();
+
+  return {
+    normalizedUrl: normalized,
+    sourceText: combinedText.slice(0, 180000),
+    extractionStatus: disclosureLinks.length
+      ? `Extracted homepage plus ${disclosureLinks.length} likely disclosure/contact pages`
+      : "Extracted homepage text and structured data through public readers"
+  };
 }
 
 function inferPractice(text, url) {
@@ -222,6 +268,12 @@ function detectSignals(text, url) {
       evidence.push({
         id: rule.id,
         label: rule.evidence,
+        matches
+      });
+    } else if (rule.type === "missing" && hasMatch) {
+      evidence.push({
+        id: `${rule.id}Found`,
+        label: `Disclosure signal found: ${rule.evidence.replace(/^No obvious /, "").replace(/ was detected.*$/, "")}.`,
         matches
       });
     }

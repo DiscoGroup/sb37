@@ -44,4 +44,4 @@ The report displays a percentage-style risk board for each category. Some signal
 
 ## Notes
 
-The free assessment is a front-end demo. It attempts to extract readable homepage text through a public reader endpoint, infer practice type, and run all SB37 signal categories automatically. Some sites may block extraction or hide risk in scripts, chatbots, paid ads, third-party vendors, or intake workflows. Production launch should connect the form to a backend crawler/workflow, update the contact email, and have counsel review all legal language.
+The free assessment is a front-end demo. It attempts to extract readable homepage text, structured data, and likely same-domain disclosure/contact/about/attorney pages through public reader endpoints, infer practice type, and run all SB37 signal categories automatically. Some sites may block extraction or hide risk in scripts, chatbots, paid ads, third-party vendors, or intake workflows. Production launch should connect the form to a backend crawler/workflow, update the contact email, and have counsel review all legal language.
