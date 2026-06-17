@@ -427,89 +427,104 @@ function scoreAssessment({ signals, url, sourceText, evidence, extractionStatus,
 
 function levelLabel(level) {
   return {
-    low: "Low Risk",
-    medium: "Moderate Risk",
-    elevated: "Elevated Risk",
-    high: "High Risk",
-    critical: "Critical Risk"
+    low: "Looks Stable",
+    medium: "Review Suggested",
+    elevated: "Review Suggested",
+    high: "Priority Review",
+    critical: "Priority Review"
   }[level];
 }
 
 function rowClass(percent) {
-  if (percent >= 80) return "";
-  if (percent >= 55) return "watch";
+  if (percent >= 85) return "clear";
+  if (percent >= 60) return "watch";
   return "alert";
 }
 
+function scoreTone(level) {
+  if (level === "low") return "clear";
+  if (level === "medium" || level === "elevated") return "watch";
+  return "alert";
+}
+
+function reviewLabel(percent) {
+  if (percent >= 85) return "Looks stable";
+  if (percent >= 60) return "Review suggested";
+  return "Priority review";
+}
+
 function renderMarketBoard(categoryScores) {
-  return categoryScores.map((category) => `
-    <div class="market-row ${rowClass(category.percent)}">
-      <div class="market-name">${escapeHtml(category.name)}</div>
-      <div class="market-track" aria-label="${escapeHtml(category.name)} ${category.percent}%">
-        <div class="market-fill" style="--pct: ${category.percent}%"></div>
+  const ordered = [...categoryScores].sort((a, b) => a.percent - b.percent);
+  return ordered.map((category) => `
+    <div class="review-row ${rowClass(category.percent)}">
+      <div>
+        <strong>${escapeHtml(category.name)}</strong>
+        <span>${reviewLabel(category.percent)}</span>
       </div>
-      <div class="market-percent">${category.percent}%</div>
+      <div class="review-pill">${category.percent}%</div>
     </div>
   `).join("");
 }
 
-function renderEvidence(evidence) {
-  const visible = evidence.slice(0, 8);
-  if (!visible.length) {
-    return '<p class="form-note">No specific homepage evidence snippets were detected by the automatic scan.</p>';
+function renderReviewAreas(categoryScores) {
+  const needsReview = categoryScores.filter((category) => category.percent < 100).sort((a, b) => a.percent - b.percent).slice(0, 5);
+  if (!needsReview.length) {
+    return `
+      <ul class="report-list compact">
+        <li>No obvious public-facing gaps were surfaced in this pass. A full review can still verify pages, ads, chat, intake, vendors, and monitoring records.</li>
+      </ul>
+    `;
   }
+
   return `
-    <div class="evidence-grid">
-      ${visible.map((item) => `
-        <div class="evidence-card">
-          <strong>${escapeHtml(item.label)}</strong>
-          <span>${item.matches.length ? `Detected terms: ${escapeHtml(item.matches.join(", "))}` : "Absence-based signal from extracted homepage text."}</span>
-        </div>
-      `).join("")}
-    </div>
+    <ul class="report-list compact">
+      ${needsReview.map((category) => `<li>${escapeHtml(category.name)} should be reviewed before relying on the public marketing footprint.</li>`).join("")}
+    </ul>
   `;
 }
 
 function renderReport({ firmName, website, practice, scoreData }) {
+  const tone = scoreTone(scoreData.level);
   reportCard.innerHTML = `
-    <div class="report-result status-${scoreData.level === "low" ? "low" : scoreData.level === "medium" || scoreData.level === "elevated" ? "medium" : "high"}">
-      <div class="report-score">
-        <div class="score-number">${scoreData.score}</div>
+    <div class="report-result status-${tone}">
+      <div class="score-hero">
+        <div class="score-ring ${tone}" style="--score: ${scoreData.score * 3.6}deg">
+          <div class="score-ring-core">
+            <strong>${scoreData.score}</strong>
+            <span>SB37 score</span>
+          </div>
+        </div>
         <div>
           <span class="report-badge">${escapeHtml(levelLabel(scoreData.level))}</span>
-          <h3>${escapeHtml(firmName || "Detected firm")} SB37 snapshot</h3>
-          <p class="form-note">${escapeHtml(website)} | Detected practice: ${escapeHtml(practice)}</p>
-          <p class="form-note">${escapeHtml(scoreData.extractionStatus)}</p>
+          <h3>${escapeHtml(firmName || "Website")} scan complete</h3>
+          <p>${escapeHtml(website)}</p>
+          <p class="form-note">Detected practice: ${escapeHtml(practice)}. This free screen found enough signal to recommend a guided COA review before relying on the score.</p>
+          <a class="button primary" href="mailto:compliance@sb37coa.com?subject=Book%20SB37%20COA%20Review&body=Please%20book%20a%20consult%20for%20a%20full%20SB37%20COA%20review.">Book consult</a>
         </div>
       </div>
       <div class="report-stats">
-        <div class="report-stat"><strong>${scoreData.signalsChecked}</strong><span>Signals screened</span></div>
-        <div class="report-stat"><strong>${scoreData.triggeredCount}</strong><span>Potential deltas</span></div>
         <div class="report-stat"><strong>${scoreData.pagesScanned}</strong><span>Pages scanned</span></div>
         <div class="report-stat"><strong>${scoreData.filesScanned}</strong><span>Files scanned</span></div>
         <div class="report-stat"><strong>${scoreData.wordsScanned}</strong><span>Words scanned</span></div>
+        <div class="report-stat"><strong>${scoreData.triggeredCount}</strong><span>Review flags</span></div>
       </div>
       <section>
-        <h4>SB37 risk board</h4>
+        <h4>Simple breakdown</h4>
         <div class="market-board">${renderMarketBoard(scoreData.categoryScores)}</div>
       </section>
       <section>
-        <h4>Detected evidence</h4>
-        ${renderEvidence(scoreData.evidence)}
+        <h4>Areas to discuss</h4>
+        ${renderReviewAreas(scoreData.categoryScores)}
       </section>
       <section>
-        <h4>Likely deltas</h4>
+        <h4>What the full review confirms</h4>
         <ul class="report-list">
-          ${scoreData.deltas.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+          <li>Whether public pages, landing pages, and ad claims match SB37 disclosure expectations.</li>
+          <li>Whether chat, intake, referral, and vendor-controlled marketing introduce unseen risk.</li>
+          <li>Whether your firm has the records, approvals, and monitoring process to defend the marketing system.</li>
         </ul>
       </section>
-      <section>
-        <h4>Recommended next steps</h4>
-        <ul class="report-list">
-          ${scoreData.nextSteps.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
-        </ul>
-      </section>
-      <a class="button primary wide" href="mailto:compliance@sb37coa.com?subject=Full%20SB37%20COA%20Review&body=Please%20send%20pricing%20for%20a%20full%20COA%20review%20including%20chatbots%2C%20third-party%20vendors%2C%20intake%20scripts%2C%20and%20monitoring.">Request full COA review</a>
+      <a class="button primary wide" href="mailto:compliance@sb37coa.com?subject=Full%20SB37%20COA%20Review&body=Please%20send%20pricing%20for%20a%20full%20COA%20review%20including%20chatbots%2C%20third-party%20vendors%2C%20intake%20scripts%2C%20and%20monitoring.">Unlock full COA review</a>
       <p class="form-note">Educational preliminary screen only. Not legal advice and not a compliance certification.</p>
     </div>
   `;
