@@ -934,7 +934,7 @@ if (assessmentForm) {
     const normalizedWebsite = normalizeWebsite(rawWebsite);
 
     submitButton.disabled = true;
-    submitButton.textContent = "Scanning...";
+    submitButton.textContent = "Analyzing...";
     renderScanProgress(normalizedWebsite);
     startScanMotion();
     setScanStatus("scanning", "Running fast preview scan across key pages, structured data, legal pages, and visible marketing signals.");
@@ -972,6 +972,6 @@ if (assessmentForm) {
     stopScanMotion();
     document.querySelector("#assessment").scrollIntoView({ behavior: "smooth", block: "start" });
     submitButton.disabled = false;
-    submitButton.textContent = "Run test";
+    submitButton.textContent = "Analyze";
   });
 }

@@ -18,22 +18,28 @@
           <a href="about.html">About</a>
           <a href="terms.html">Terms</a>
         </div>
-        <form class="top-scan-form" id="assessmentForm">
-          <label class="sr-only" for="website">Law firm website</label>
-          <input id="website" name="website" type="text" inputmode="url" autocapitalize="none" autocomplete="url" spellcheck="false" placeholder="examplelaw.com" required>
-          <button class="button primary" type="submit">Run test</button>
-        </form>
       </div>
     </header>
 
     <main class="scan-app">
+      <section class="psi-hero" aria-label="SB37 scanner">
+        <div class="psi-copy">
+          <h1>SB37 advertising scan</h1>
+          <p>Enter a law firm website to analyze public marketing, disclosures, claims, AI/chat, intake, vendor, referral, and attorney transparency signals.</p>
+        </div>
+        <form class="top-scan-form psi-form" id="assessmentForm">
+          <label class="sr-only" for="website">Law firm website</label>
+          <input id="website" name="website" type="text" inputmode="url" autocapitalize="none" autocomplete="url" spellcheck="false" placeholder="Enter a law firm URL" required>
+          <button class="button primary" type="submit">Analyze</button>
+        </form>
+      </section>
       <section class="assessment-shell compact-report" id="assessment">
         <div class="assessment-output">
           <article class="report-card" id="reportCard" aria-live="polite">
             <div class="report-empty">
               <span class="report-badge">Ready</span>
-              <h3>Enter a law firm website to run the SB37 report.</h3>
-              <p>The score and category breakdown will appear here.</p>
+              <h3>Report will appear here.</h3>
+              <p>Run an analysis to generate the score, scan stats, category breakdown, and PDF report option.</p>
             </div>
           </article>
         </div>
