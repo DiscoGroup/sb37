@@ -1,6 +1,7 @@
 const assessmentForm = document.querySelector("#assessmentForm");
 const reportCard = document.querySelector("#reportCard");
 const scanStatus = document.querySelector("#scanStatus");
+let scanMotionTimer;
 
 const categories = [
   {
@@ -154,6 +155,18 @@ const MAX_FILE_URLS = 0;
 const CRAWL_BATCH_SIZE = 8;
 const PAGE_TIMEOUT_MS = 2600;
 const FILE_TIMEOUT_MS = 2600;
+const scanPhases = [
+  "Normalizing domain and security headers",
+  "Discovering sitemap and priority internal pages",
+  "Reading homepage, header, footer, and schema",
+  "Checking attorney identity and office signals",
+  "Parsing disclaimers, terms, and advertising language",
+  "Reviewing case-result and recovery claim patterns",
+  "Screening awards, rankings, and specialization claims",
+  "Testing AI, chatbot, and intake-risk language",
+  "Mapping vendor, referral, and joint-advertising signals",
+  "Building SB37 category score"
+];
 
 function normalizeWebsite(rawUrl) {
   const trimmed = rawUrl.trim();
@@ -479,6 +492,64 @@ function reviewLabel(percent) {
   return "Priority review";
 }
 
+function renderScanProgress(website) {
+  reportCard.innerHTML = `
+    <div class="scan-progress" aria-live="polite">
+      <div class="scan-orbit" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="scan-copy">
+        <span class="report-badge">Scanning</span>
+        <h3>Building SB37 report</h3>
+        <p>${escapeHtml(website)}</p>
+      </div>
+      <div class="scan-bar" aria-hidden="true"><span></span></div>
+      <div class="scan-phase">
+        <strong id="scanPhaseLabel">${escapeHtml(scanPhases[0])}</strong>
+        <span id="scanPercent">8%</span>
+      </div>
+      <div class="scan-modules" aria-label="Analysis modules">
+        ${categories.map((category, index) => `
+          <span class="${index === 0 ? "active" : ""}">${escapeHtml(category.name)}</span>
+        `).join("")}
+      </div>
+      <div class="scan-console" aria-hidden="true">
+        <span>crawler.queue: homepage, sitemap, disclosures, attorney pages</span>
+        <span>extractors: html, schema, readable text, footer/header copy</span>
+        <span>markets: ${signalRules.length} signals across ${categories.length} SB37 modules</span>
+      </div>
+    </div>
+  `;
+}
+
+function startScanMotion() {
+  window.clearInterval(scanMotionTimer);
+  let step = 0;
+  scanMotionTimer = window.setInterval(() => {
+    step += 1;
+    const phaseLabel = document.querySelector("#scanPhaseLabel");
+    const percentLabel = document.querySelector("#scanPercent");
+    const moduleChips = Array.from(document.querySelectorAll(".scan-modules span"));
+    if (!phaseLabel || !percentLabel || !moduleChips.length) return;
+
+    const phase = scanPhases[step % scanPhases.length];
+    const percent = Math.min(94, 8 + step * 9);
+    phaseLabel.textContent = phase;
+    percentLabel.textContent = `${percent}%`;
+    moduleChips.forEach((chip, index) => {
+      chip.classList.toggle("active", index === step % moduleChips.length);
+      chip.classList.toggle("done", index < step % (moduleChips.length + 1));
+    });
+  }, 850);
+}
+
+function stopScanMotion() {
+  window.clearInterval(scanMotionTimer);
+  scanMotionTimer = null;
+}
+
 function categoryPreviewReason(category) {
   if (!category.activeFindings.length) {
     return "No obvious preview signal triggered in this area.";
@@ -527,9 +598,9 @@ function renderReport({ firmName, website, practice, scoreData }) {
       </div>
       <div class="report-stats">
         <div class="report-stat"><strong>${scoreData.pagesScanned}</strong><span>Pages scanned</span></div>
-        <div class="report-stat"><strong>${scoreData.filesScanned}</strong><span>Files scanned</span></div>
+        <div class="report-stat"><strong>${scoreData.signalsChecked}</strong><span>Signals checked</span></div>
+        <div class="report-stat"><strong>${scoreData.categoryScores.length}</strong><span>Modules run</span></div>
         <div class="report-stat"><strong>${scoreData.wordsScanned}</strong><span>Words scanned</span></div>
-        <div class="report-stat"><strong>${scoreData.triggeredCount}</strong><span>Review flags</span></div>
       </div>
       <section>
         <h4>Breakdown</h4>
@@ -588,6 +659,8 @@ if (assessmentForm) {
 
     submitButton.disabled = true;
     submitButton.textContent = "Scanning...";
+    renderScanProgress(normalizedWebsite);
+    startScanMotion();
     setScanStatus("scanning", "Running fast preview scan across key pages, structured data, legal pages, and visible marketing signals.");
 
     let scanData;
@@ -618,6 +691,7 @@ if (assessmentForm) {
     });
 
     renderReport({ firmName, website: scanData.normalizedUrl, practice, scoreData });
+    stopScanMotion();
     document.querySelector("#assessment").scrollIntoView({ behavior: "smooth", block: "start" });
     submitButton.disabled = false;
     submitButton.textContent = "Run test";
