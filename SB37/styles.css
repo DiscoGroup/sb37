@@ -719,7 +719,7 @@ select:focus {
 }
 
 .review-pill {
-  min-width: 58px;
+  min-width: 70px;
   padding: 6px 8px;
   border-radius: 999px;
   color: var(--teal-dark);
@@ -736,6 +736,82 @@ select:focus {
 .review-row.alert .review-pill {
   color: #8f2630;
   background: #ffe0e3;
+}
+
+.locked-deltas {
+  display: grid;
+  gap: 12px;
+}
+
+.locked-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  overflow: hidden;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fbfb;
+}
+
+.locked-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.68) 58%, rgba(255, 255, 255, 0.94) 100%);
+  pointer-events: none;
+}
+
+.locked-card.watch {
+  border-color: rgba(197, 106, 22, 0.35);
+  background: #fff8ed;
+}
+
+.locked-card.alert {
+  border-color: rgba(180, 59, 69, 0.3);
+  background: #fff4f5;
+}
+
+.locked-card strong,
+.locked-card p,
+.locked-card .lock-label,
+.locked-card .lock-chip {
+  position: relative;
+  z-index: 1;
+}
+
+.locked-card strong {
+  display: block;
+  margin: 3px 0 4px;
+  font-size: 18px;
+}
+
+.locked-card p {
+  max-width: 620px;
+  margin: 0;
+  color: var(--muted);
+}
+
+.lock-label {
+  color: var(--teal-dark);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.lock-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--white);
+  background: var(--ink);
+  font-size: 13px;
+  font-weight: 950;
+  white-space: nowrap;
 }
 
 .report-stats {

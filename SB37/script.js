@@ -126,11 +126,11 @@ const signalRules = [
   { id: "unclearReferral", pattern: /\b(referral|referred|lead generator|matching service|legal network|find a lawyer|connect you with)\b/gi, evidence: "The site appears to reference referral, matching, lead-generator, or legal-network relationships." }
 ];
 
-const MAX_DEEP_PAGES = 80;
-const MAX_FILE_URLS = 25;
-const CRAWL_BATCH_SIZE = 6;
-const PAGE_TIMEOUT_MS = 7000;
-const FILE_TIMEOUT_MS = 8000;
+const MAX_DEEP_PAGES = 4;
+const MAX_FILE_URLS = 0;
+const CRAWL_BATCH_SIZE = 8;
+const PAGE_TIMEOUT_MS = 2600;
+const FILE_TIMEOUT_MS = 2600;
 
 function normalizeWebsite(rawUrl) {
   const trimmed = rawUrl.trim();
@@ -222,10 +222,7 @@ function sitemapCandidates(baseUrl) {
   return [
     `${origin}/sitemap.xml`,
     `${origin}/sitemap_index.xml`,
-    `${origin}/sitemap-index.xml`,
-    `${origin}/page-sitemap.xml`,
-    `${origin}/post-sitemap.xml`,
-    `${origin}/sitemap.txt`
+    `${origin}/sitemap-index.xml`
   ];
 }
 
@@ -238,14 +235,14 @@ function parseSitemapUrls(raw, baseUrl) {
 async function discoverSitemapUrls(baseUrl) {
   const firstPass = await Promise.allSettled(sitemapCandidates(baseUrl).map(async (url) => ({
     url,
-    raw: await fetchRawUrl(url, 5000)
+    raw: await fetchRawUrl(url, 2500)
   })));
   const found = firstPass
     .filter((result) => result.status === "fulfilled" && result.value.raw)
     .flatMap((result) => parseSitemapUrls(result.value.raw, baseUrl));
 
-  const nestedSitemaps = found.filter((url) => /sitemap/i.test(url)).slice(0, 8);
-  const nested = await Promise.allSettled(nestedSitemaps.map(async (url) => parseSitemapUrls(await fetchRawUrl(url, 5000), baseUrl)));
+  const nestedSitemaps = found.filter((url) => /sitemap/i.test(url)).slice(0, 4);
+  const nested = await Promise.allSettled(nestedSitemaps.map(async (url) => parseSitemapUrls(await fetchRawUrl(url, 2500), baseUrl)));
   return Array.from(new Set(found.concat(nested.flatMap((result) => result.status === "fulfilled" ? result.value : []))));
 }
 
@@ -300,7 +297,7 @@ async function readWebsiteText(url) {
     .filter((linkedUrl) => linkedUrl !== normalized && isProbablyHtmlPage(linkedUrl))
     .slice(0, MAX_DEEP_PAGES);
 
-  if (scanStatus) setScanStatus("scanning", `Scanning ${pageUrls.length + 1} pages and ${fileUrls.length} text/file URLs for SB37 signals.`);
+  if (scanStatus) setScanStatus("scanning", `Building preview from ${pageUrls.length + 1} key pages and ${fileUrls.length} file URLs.`);
 
   const pageResults = await runInBatches(pageUrls, CRAWL_BATCH_SIZE, (link) => extractOnePage(link, PAGE_TIMEOUT_MS));
   const successfulPages = pageResults
@@ -327,7 +324,7 @@ async function readWebsiteText(url) {
     sourceText: combinedText.slice(0, 450000),
     pagesScanned,
     filesScanned,
-    extractionStatus: `Deep scan extracted ${pagesScanned} same-domain pages${filesScanned ? ` and ${filesScanned} text/file URLs` : ""}`
+    extractionStatus: `Preview scan checked ${pagesScanned} key pages${filesScanned ? ` and ${filesScanned} file URLs` : ""}`
   };
 }
 
@@ -459,9 +456,9 @@ function renderMarketBoard(categoryScores) {
     <div class="review-row ${rowClass(category.percent)}">
       <div>
         <strong>${escapeHtml(category.name)}</strong>
-        <span>${reviewLabel(category.percent)}</span>
+        <span>${category.percent < 100 ? "Locked delta available" : reviewLabel(category.percent)}</span>
       </div>
-      <div class="review-pill">${category.percent}%</div>
+      <div class="review-pill">${category.percent < 100 ? "Locked" : `${category.percent}%`}</div>
     </div>
   `).join("");
 }
@@ -477,9 +474,18 @@ function renderReviewAreas(categoryScores) {
   }
 
   return `
-    <ul class="report-list compact">
-      ${needsReview.map((category) => `<li>${escapeHtml(category.name)} should be reviewed before relying on the public marketing footprint.</li>`).join("")}
-    </ul>
+    <div class="locked-deltas">
+      ${needsReview.map((category, index) => `
+        <div class="locked-card ${rowClass(category.percent)}">
+          <div>
+            <span class="lock-label">Locked delta ${index + 1}</span>
+            <strong>${escapeHtml(category.name)}</strong>
+            <p>Preview found a signal worth reviewing. Unlock the full delta to see what triggered it and what to fix first.</p>
+          </div>
+          <span class="lock-chip">Unlock</span>
+        </div>
+      `).join("")}
+    </div>
   `;
 }
 
@@ -498,8 +504,8 @@ function renderReport({ firmName, website, practice, scoreData }) {
           <span class="report-badge">${escapeHtml(levelLabel(scoreData.level))}</span>
           <h3>${escapeHtml(firmName || "Website")} scan complete</h3>
           <p>${escapeHtml(website)}</p>
-          <p class="form-note">Detected practice: ${escapeHtml(practice)}. This free screen found enough signal to recommend a guided COA review before relying on the score.</p>
-          <a class="button primary" href="mailto:compliance@sb37coa.com?subject=Book%20SB37%20COA%20Review&body=Please%20book%20a%20consult%20for%20a%20full%20SB37%20COA%20review.">Book consult</a>
+          <p class="form-note">Detected practice: ${escapeHtml(practice)}. Your free preview found locked SB37 deltas that need a closer look.</p>
+          <a class="button primary" href="mailto:compliance@sb37coa.com?subject=Unlock%20SB37%20Deltas&body=Please%20send%20pricing%20to%20unlock%20the%20full%20SB37%20delta%20report%20and%20book%20a%20COA%20review.">Unlock deltas</a>
         </div>
       </div>
       <div class="report-stats">
@@ -509,22 +515,22 @@ function renderReport({ firmName, website, practice, scoreData }) {
         <div class="report-stat"><strong>${scoreData.triggeredCount}</strong><span>Review flags</span></div>
       </div>
       <section>
-        <h4>Simple breakdown</h4>
+        <h4>Preview breakdown</h4>
         <div class="market-board">${renderMarketBoard(scoreData.categoryScores)}</div>
       </section>
       <section>
-        <h4>Areas to discuss</h4>
+        <h4>Locked deltas</h4>
         ${renderReviewAreas(scoreData.categoryScores)}
       </section>
       <section>
-        <h4>What the full review confirms</h4>
+        <h4>What unlock includes</h4>
         <ul class="report-list">
-          <li>Whether public pages, landing pages, and ad claims match SB37 disclosure expectations.</li>
-          <li>Whether chat, intake, referral, and vendor-controlled marketing introduce unseen risk.</li>
-          <li>Whether your firm has the records, approvals, and monitoring process to defend the marketing system.</li>
+          <li>The exact deltas behind each locked category.</li>
+          <li>Priority fixes for pages, claims, vendors, intake, chat, and referrals.</li>
+          <li>A COA review path for monitoring and documentation.</li>
         </ul>
       </section>
-      <a class="button primary wide" href="mailto:compliance@sb37coa.com?subject=Full%20SB37%20COA%20Review&body=Please%20send%20pricing%20for%20a%20full%20COA%20review%20including%20chatbots%2C%20third-party%20vendors%2C%20intake%20scripts%2C%20and%20monitoring.">Unlock full COA review</a>
+      <a class="button primary wide" href="mailto:compliance@sb37coa.com?subject=Unlock%20Full%20SB37%20Deltas&body=Please%20send%20pricing%20for%20the%20full%20delta%20report%20including%20chatbots%2C%20third-party%20vendors%2C%20intake%20scripts%2C%20and%20monitoring.">Unlock all deltas</a>
       <p class="form-note">Educational preliminary screen only. Not legal advice and not a compliance certification.</p>
     </div>
   `;
@@ -550,7 +556,7 @@ if (assessmentForm) {
 
     submitButton.disabled = true;
     submitButton.textContent = "Scanning...";
-    setScanStatus("scanning", "Starting deep same-domain crawl: sitemap, internal pages, headers, footers, legal pages, structured data, and text/file URLs.");
+    setScanStatus("scanning", "Running fast preview scan across key pages, structured data, legal pages, and visible marketing signals.");
 
     let scanData;
     try {
