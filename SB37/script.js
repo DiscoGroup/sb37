@@ -126,6 +126,12 @@ const signalRules = [
   { id: "unclearReferral", pattern: /\b(referral|referred|lead generator|matching service|legal network|find a lawyer|connect you with)\b/gi, evidence: "The site appears to reference referral, matching, lead-generator, or legal-network relationships." }
 ];
 
+const MAX_DEEP_PAGES = 80;
+const MAX_FILE_URLS = 25;
+const CRAWL_BATCH_SIZE = 6;
+const PAGE_TIMEOUT_MS = 7000;
+const FILE_TIMEOUT_MS = 8000;
+
 function normalizeWebsite(rawUrl) {
   const trimmed = rawUrl.trim();
   if (!/^https?:\/\//i.test(trimmed)) {
@@ -167,28 +173,90 @@ function isLikelyDisclosureLink(url) {
   return /\b(disclaimer|terms|privacy|contact|about|attorney|lawyer|team|firm|state-bar|statebar|bar|profile|bio)\b/i.test(url);
 }
 
-function extractInternalLinks(raw, baseUrl) {
+function isProbablyHtmlPage(url) {
+  return !/\.(pdf|docx?|rtf|txt|csv|xlsx?|pptx?|zip|jpg|jpeg|png|gif|svg|webp|mp4|mov|mp3|css|js|woff2?|ttf|ico)(\?|$)/i.test(url);
+}
+
+function isTextFileUrl(url) {
+  return /\.(pdf|docx?|rtf|txt)(\?|$)/i.test(url);
+}
+
+function normalizeInternalUrl(href, baseUrl) {
+  try {
+    const base = new URL(baseUrl);
+    const linked = new URL(href, base);
+    if (linked.hostname.replace(/^www\./, "") !== base.hostname.replace(/^www\./, "")) return "";
+    linked.hash = "";
+    linked.search = "";
+    return linked.href;
+  } catch (error) {
+    return "";
+  }
+}
+
+function extractLinkedUrls(raw, baseUrl) {
   const hrefLinks = Array.from(raw.matchAll(/\bhref\s*=\s*["']?([^"'\s>]+)/gi)).map((match) => match[1]);
   const markdownLinks = Array.from(raw.matchAll(/\]\(([^)]+)\)/g)).map((match) => match[1]);
   const jsonLinks = Array.from(raw.matchAll(/"url"\s*:\s*"([^"]+)"/gi)).map((match) => match[1].replaceAll("\\/", "/"));
   const links = hrefLinks.concat(markdownLinks, jsonLinks)
     .filter((href) => href && !href.startsWith("#") && !href.startsWith("mailto:") && !href.startsWith("tel:"));
 
-  const base = new URL(baseUrl);
-  return Array.from(new Set(links.map((href) => {
-    try {
-      return new URL(href, base).href.split("#")[0];
-    } catch (error) {
-      return "";
-    }
-  }))).filter((href) => {
-    try {
-      const linked = new URL(href);
-      return linked.hostname.replace(/^www\./, "") === base.hostname.replace(/^www\./, "") && isLikelyDisclosureLink(href);
-    } catch (error) {
-      return false;
-    }
-  }).slice(0, 6);
+  return Array.from(new Set(links.map((href) => normalizeInternalUrl(href, baseUrl)).filter(Boolean)));
+}
+
+function prioritizeUrls(urls) {
+  return Array.from(new Set(urls)).sort((a, b) => {
+    const aDisclosure = isLikelyDisclosureLink(a) ? 0 : 1;
+    const bDisclosure = isLikelyDisclosureLink(b) ? 0 : 1;
+    if (aDisclosure !== bDisclosure) return aDisclosure - bDisclosure;
+    return a.length - b.length;
+  });
+}
+
+async function fetchRawUrl(url, timeoutMs = PAGE_TIMEOUT_MS) {
+  return fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, timeoutMs);
+}
+
+function sitemapCandidates(baseUrl) {
+  const origin = new URL(baseUrl).origin;
+  return [
+    `${origin}/sitemap.xml`,
+    `${origin}/sitemap_index.xml`,
+    `${origin}/sitemap-index.xml`,
+    `${origin}/page-sitemap.xml`,
+    `${origin}/post-sitemap.xml`,
+    `${origin}/sitemap.txt`
+  ];
+}
+
+function parseSitemapUrls(raw, baseUrl) {
+  const locUrls = Array.from(raw.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/gi)).map((match) => match[1].trim());
+  const textUrls = Array.from(raw.matchAll(/https?:\/\/[^\s"'<>]+/gi)).map((match) => match[0].trim());
+  return locUrls.concat(textUrls).map((href) => normalizeInternalUrl(href, baseUrl)).filter(Boolean);
+}
+
+async function discoverSitemapUrls(baseUrl) {
+  const firstPass = await Promise.allSettled(sitemapCandidates(baseUrl).map(async (url) => ({
+    url,
+    raw: await fetchRawUrl(url, 5000)
+  })));
+  const found = firstPass
+    .filter((result) => result.status === "fulfilled" && result.value.raw)
+    .flatMap((result) => parseSitemapUrls(result.value.raw, baseUrl));
+
+  const nestedSitemaps = found.filter((url) => /sitemap/i.test(url)).slice(0, 8);
+  const nested = await Promise.allSettled(nestedSitemaps.map(async (url) => parseSitemapUrls(await fetchRawUrl(url, 5000), baseUrl)));
+  return Array.from(new Set(found.concat(nested.flatMap((result) => result.status === "fulfilled" ? result.value : []))));
+}
+
+async function runInBatches(items, batchSize, worker) {
+  const results = [];
+  for (let index = 0; index < items.length; index += batchSize) {
+    const batch = items.slice(index, index + batchSize);
+    const settled = await Promise.allSettled(batch.map(worker));
+    results.push(...settled);
+  }
+  return results;
 }
 
 async function fetchWithTimeout(url, timeoutMs = 12000) {
@@ -223,20 +291,43 @@ async function readWebsiteText(url) {
     throw new Error("Website extraction failed");
   }
 
-  const disclosureLinks = extractInternalLinks(`${homepage.rawHtml} ${homepage.text}`, normalized);
-  const pageResults = await Promise.allSettled(disclosureLinks.map((link) => extractOnePage(link, 6000)));
-  const extraText = pageResults
+  if (scanStatus) setScanStatus("scanning", "Discovering sitemap, internal pages, headers, footers, legal pages, attorney pages, and text/PDF-style files.");
+
+  const sitemapUrls = await discoverSitemapUrls(normalized);
+  const homepageLinks = extractLinkedUrls(`${homepage.rawHtml} ${homepage.text}`, normalized);
+  const fileUrls = prioritizeUrls(sitemapUrls.concat(homepageLinks)).filter(isTextFileUrl).slice(0, MAX_FILE_URLS);
+  const pageUrls = prioritizeUrls(sitemapUrls.concat(homepageLinks))
+    .filter((linkedUrl) => linkedUrl !== normalized && isProbablyHtmlPage(linkedUrl))
+    .slice(0, MAX_DEEP_PAGES);
+
+  if (scanStatus) setScanStatus("scanning", `Scanning ${pageUrls.length + 1} pages and ${fileUrls.length} text/file URLs for SB37 signals.`);
+
+  const pageResults = await runInBatches(pageUrls, CRAWL_BATCH_SIZE, (link) => extractOnePage(link, PAGE_TIMEOUT_MS));
+  const successfulPages = pageResults
     .filter((result) => result.status === "fulfilled")
-    .map((result) => result.value.text)
-    .join(" ");
-  const combinedText = `${homepage.text} ${extraText}`.replace(/\s+/g, " ").trim();
+    .map((result) => result.value)
+    .filter((page) => page.text && page.text.length >= 40);
+
+  const fileResults = await runInBatches(fileUrls, CRAWL_BATCH_SIZE, (link) => fetchWithTimeout(`https://r.jina.ai/http://${link}`, FILE_TIMEOUT_MS));
+  const successfulFiles = fileResults
+    .filter((result) => result.status === "fulfilled" && result.value)
+    .map((result) => result.value);
+
+  const combinedText = [homepage.text]
+    .concat(successfulPages.map((page) => page.text), successfulFiles)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const pagesScanned = 1 + successfulPages.length;
+  const filesScanned = successfulFiles.length;
 
   return {
     normalizedUrl: normalized,
-    sourceText: combinedText.slice(0, 180000),
-    extractionStatus: disclosureLinks.length
-      ? `Extracted homepage plus ${disclosureLinks.length} likely disclosure/contact pages`
-      : "Extracted homepage text and structured data through public readers"
+    sourceText: combinedText.slice(0, 450000),
+    pagesScanned,
+    filesScanned,
+    extractionStatus: `Deep scan extracted ${pagesScanned} same-domain pages${filesScanned ? ` and ${filesScanned} text/file URLs` : ""}`
   };
 }
 
@@ -290,7 +381,7 @@ function scoreCategory(category, signals) {
   return { ...category, activeFindings, rawPenalty, cappedPenalty, percent };
 }
 
-function scoreAssessment({ signals, url, sourceText, evidence, extractionStatus }) {
+function scoreAssessment({ signals, url, sourceText, evidence, extractionStatus, pagesScanned = 1, filesScanned = 0 }) {
   const categoryScores = categories.map((category) => scoreCategory(category, signals));
   let totalPenalty = categoryScores.reduce((sum, category) => sum + category.cappedPenalty, 0);
   const inferredFindings = [];
@@ -312,7 +403,7 @@ function scoreAssessment({ signals, url, sourceText, evidence, extractionStatus 
   }
 
   const nextSteps = [
-    "Run the full COA review against all public pages, landing pages, paid ads, referral funnels, intake scripts, and chatbots.",
+    "Run the full COA review against every public page, landing page, paid ad, referral funnel, intake script, chatbot, and vendor-controlled asset.",
     "Verify attorney identity, office address, advertising disclosures, spokesperson disclosures, and case-result disclaimers on each high-traffic page.",
     "Collect substantiation files for awards, rankings, success claims, settlement numbers, and recovery statistics.",
     "Document vendor approval rights, takedown obligations, chatbot scripts, transcript sampling, and quarterly monitoring cadence."
@@ -326,6 +417,8 @@ function scoreAssessment({ signals, url, sourceText, evidence, extractionStatus 
     nextSteps,
     evidence,
     extractionStatus,
+    pagesScanned,
+    filesScanned,
     wordsScanned: sourceText.split(/\s+/).filter(Boolean).length,
     signalsChecked: signalRules.length,
     triggeredCount: signals.size + inferredFindings.length
@@ -392,6 +485,8 @@ function renderReport({ firmName, website, practice, scoreData }) {
       <div class="report-stats">
         <div class="report-stat"><strong>${scoreData.signalsChecked}</strong><span>Signals screened</span></div>
         <div class="report-stat"><strong>${scoreData.triggeredCount}</strong><span>Potential deltas</span></div>
+        <div class="report-stat"><strong>${scoreData.pagesScanned}</strong><span>Pages scanned</span></div>
+        <div class="report-stat"><strong>${scoreData.filesScanned}</strong><span>Files scanned</span></div>
         <div class="report-stat"><strong>${scoreData.wordsScanned}</strong><span>Words scanned</span></div>
       </div>
       <section>
@@ -440,16 +535,18 @@ if (assessmentForm) {
 
     submitButton.disabled = true;
     submitButton.textContent = "Scanning...";
-    setScanStatus("scanning", "Reading homepage text, inferring practice area, and running all SB37 risk markets.");
+    setScanStatus("scanning", "Starting deep same-domain crawl: sitemap, internal pages, headers, footers, legal pages, structured data, and text/file URLs.");
 
     let scanData;
     try {
       scanData = await readWebsiteText(normalizedWebsite);
-      setScanStatus("", "Scan complete. The report used extracted homepage text plus URL-level signals.");
+      setScanStatus("", `Scan complete. ${scanData.extractionStatus}.`);
     } catch (error) {
       scanData = {
         normalizedUrl: normalizedWebsite,
         sourceText: normalizedWebsite,
+        pagesScanned: 0,
+        filesScanned: 0,
         extractionStatus: "Limited scan: the site blocked or failed public text extraction, so the report used URL-level signals only"
       };
       setScanStatus("warning", "The site blocked public extraction. The report still ran every category using URL-level signals, but a full COA review should inspect the site directly.");
@@ -462,7 +559,9 @@ if (assessmentForm) {
       url: scanData.normalizedUrl,
       sourceText: scanData.sourceText,
       evidence,
-      extractionStatus: scanData.extractionStatus
+      extractionStatus: scanData.extractionStatus,
+      pagesScanned: scanData.pagesScanned,
+      filesScanned: scanData.filesScanned
     });
 
     renderReport({ firmName, website: scanData.normalizedUrl, practice, scoreData });
