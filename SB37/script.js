@@ -521,10 +521,10 @@ function scoreAssessment({ signals, url, sourceText, evidence, extractionStatus,
   }
 
   const nextSteps = [
-    "Run the full COA review against every public page, landing page, paid ad, referral funnel, intake script, chatbot, and vendor-controlled asset.",
+    "Use a focused COA review to check public pages, landing pages, paid ads, referral funnels, intake scripts, chatbots, and vendor-controlled assets.",
     "Verify attorney identity, office address, advertising disclosures, spokesperson disclosures, and case-result disclaimers on each high-traffic page.",
     "Collect substantiation files for awards, rankings, success claims, settlement numbers, and recovery statistics.",
-    "Document vendor approval rights, takedown obligations, chatbot scripts, transcript sampling, and quarterly monitoring cadence."
+    "Document vendor approval rights, update workflows, chatbot scripts, transcript sampling, and a practical monitoring cadence."
   ];
 
   return {
@@ -665,7 +665,7 @@ function renderMarketBoard(categoryScores) {
 
 const categoryFixes = {
   disclosures: {
-    risk: "Disclosure problems turn otherwise ordinary marketing into a recordkeeping and supervision problem. If the disclaimer exists only in a footer or legal page, the claim-level context can still look weak.",
+    risk: "Disclosure signals are a useful first place to improve clarity. If disclaimer language is only in a footer or legal page, the next step is to make the right context easier to see near important claims and forms.",
     firstFix: "Place attorney advertising, responsible attorney, firm identity, office address, and disclaimer language in visible page-level locations.",
     implementation: [
       "Create a reusable disclosure block for every landing page template.",
@@ -678,10 +678,10 @@ const categoryFixes = {
       "Responsible attorney approval note.",
       "Version date and URL inventory."
     ],
-    serviceNeed: "This usually requires page-template edits plus a claims inventory, not a one-line footer change."
+    serviceNeed: "A guided review can help confirm which page templates need small edits and which claims need closer context."
   },
   claims: {
-    risk: "Result and compensation language is the highest-friction area because it can create expectation, guarantee, or misleading-comparison risk even when a general disclaimer exists elsewhere.",
+    risk: "Result and compensation language deserves careful review because consumers may read it as an expectation about their own matter unless the page gives enough context.",
     firstFix: "Pair every result, recovery, settlement, verdict, and compensation claim with nearby context and past-results disclaimer language.",
     implementation: [
       "Inventory every dollar amount, verdict, settlement, recovered, won, success, and compensation phrase.",
@@ -694,10 +694,10 @@ const categoryFixes = {
       "Backup documents for each published number or outcome.",
       "Attorney signoff for edited copy."
     ],
-    serviceNeed: "This is where firms often need a human page-by-page review because one aggressive phrase can offset otherwise good disclosure work."
+    serviceNeed: "A guided review can separate routine success language from claims that should be rewritten or supported with better context."
   },
   awards: {
-    risk: "Award, ranking, top, best, expert, and specialist language can imply objective superiority unless the source and limits are visible.",
+    risk: "Award, ranking, top, best, expert, and specialist language is easier to trust when the source, date, and limits are visible.",
     firstFix: "Add source, date, ranking body, eligibility criteria, and limitations near award, best, top, or specialist claims.",
     implementation: [
       "Build an awards and rankings substantiation file.",
@@ -710,10 +710,10 @@ const categoryFixes = {
       "Selection methodology where available.",
       "Attorney approval for each claim."
     ],
-    serviceNeed: "Badges and ranking widgets are often vendor-managed, so cleanup usually requires coordinating web, SEO, and attorney approval."
+    serviceNeed: "A guided review can help organize which badges are already supported and which need source language added."
   },
   ai: {
-    risk: "AI-assisted content creates accountability risk when nobody can prove an attorney reviewed the output before publication.",
+    risk: "AI-assisted content is easier to manage when the firm can show who reviewed it before publication.",
     firstFix: "Document attorney review for AI-assisted content and avoid any copy that implies automated legal advice or synthetic attorney endorsement.",
     implementation: [
       "Label AI-assisted workflows internally, even if not public-facing.",
@@ -726,26 +726,26 @@ const categoryFixes = {
       "Approval workflow screenshots.",
       "Vendor AI-use disclosure and takedown terms."
     ],
-    serviceNeed: "This is difficult to repair after the fact because firms often cannot reconstruct who approved what."
+    serviceNeed: "A guided workflow can help create a simple approval log before AI-assisted content spreads across pages and vendors."
   },
   chatbot: {
-    risk: "Chat and case-evaluation flows can look like legal advice or attorney-client intake before conflicts, disclaimers, and escalation are clear.",
+    risk: "Chat and case-evaluation flows are more customer-friendly when users understand what the tool can and cannot do before they submit details.",
     firstFix: "Add no-legal-advice and no-attorney-client language before chat or case-evaluation flows, with clear attorney escalation rules.",
     implementation: [
       "Add pre-chat disclaimer language before the user submits facts.",
       "Block the bot from giving case-specific legal conclusions.",
       "Create escalation rules for urgent, jurisdictional, conflict, and representation questions.",
-      "Sample transcripts monthly and document remediation."
+      "Sample transcripts monthly and document follow-up changes."
     ],
     evidence: [
       "Chat script and prompt policy.",
       "Transcript QA samples.",
       "Escalation and conflict-screen procedure."
     ],
-    serviceNeed: "Chatbot risk is not visible from the homepage alone; it needs flow testing and transcript sampling."
+    serviceNeed: "A guided review can test the flow itself, not just the page where the chat or form appears."
   },
   intake: {
-    risk: "Intake copy and call-center scripts are where marketing turns into reliance. Outcome promises from non-attorneys can be worse than the page copy.",
+    risk: "Intake copy and call-center scripts are where website interest becomes a real conversation, so clear scripts help protect both the consumer and the firm.",
     firstFix: "Review intake scripts for outcome promises and document attorney supervision for non-attorney staff or call center workflows.",
     implementation: [
       "Collect scripts, form autoresponders, SMS templates, call prompts, and CRM nurture copy.",
@@ -758,10 +758,10 @@ const categoryFixes = {
       "Training records.",
       "Call QA checklist and sample review log."
     ],
-    serviceNeed: "Most firms miss this because intake assets live in CRM, call center, and vendor systems outside the website."
+    serviceNeed: "A guided review can help locate the forms, scripts, autoresponders, and CRM messages that are easy to miss from a website-only scan."
   },
   vendor: {
-    risk: "Vendor-created SEO, PPC, landing pages, and lead funnels can change faster than attorney review. The firm still owns the public-facing marketing risk.",
+    risk: "Vendor-created SEO, PPC, landing pages, and lead funnels often change quickly, so the next step is making review and approval easier to prove.",
     firstFix: "Require attorney approval before vendor-created SEO, PPC, landing pages, content updates, or lead-generation copy goes live.",
     implementation: [
       "List every vendor with publishing access or campaign control.",
@@ -774,10 +774,10 @@ const categoryFixes = {
       "Approval workflow records.",
       "Ad and landing-page archive."
     ],
-    serviceNeed: "This becomes painful because the highest-risk copy is often outside the main CMS and changes without the firm's legal review."
+    serviceNeed: "A guided review can help connect the main website, ad accounts, landing pages, and vendor workflows into one approval trail."
   },
   referral: {
-    risk: "Referral, matching, network, affiliate, partner, and co-counsel language can make ownership and responsibility unclear to consumers.",
+    risk: "Referral, matching, network, affiliate, partner, and co-counsel language is more useful when consumers can tell who owns the advertising and who will contact them.",
     firstFix: "Clarify referral, co-counsel, partner, network, affiliate, and lead-generator relationships wherever those signals appear.",
     implementation: [
       "Inventory every page and funnel that mentions referrals, partners, networks, co-counsel, or powered-by language.",
@@ -790,10 +790,10 @@ const categoryFixes = {
       "Co-counsel or lead-gen agreements.",
       "Screenshots of relationship disclosures."
     ],
-    serviceNeed: "This usually needs contract review plus page cleanup because the website language and vendor agreements often do not match."
+    serviceNeed: "A guided review can compare the public wording against the firm’s actual referral, co-counsel, or lead-source process."
   },
   transparency: {
-    risk: "If the attorney, firm, office, or responsible contact is not obvious, consumers and regulators may not know who owns the advertisement.",
+    risk: "Attorney and firm identity details help visitors understand who is responsible for the advertisement and how to verify the firm.",
     firstFix: "Make attorney identity, firm ownership, office location, and responsible-contact details easy to find from the scanned pages.",
     implementation: [
       "Make attorney and firm identity visible in crawlable text.",
@@ -806,14 +806,14 @@ const categoryFixes = {
       "Office-address screenshots.",
       "Responsible-contact approval record."
     ],
-    serviceNeed: "This is straightforward to fix, but easy to break later when vendors launch standalone landing pages."
+    serviceNeed: "A guided review can make sure those details stay consistent across the main site and any standalone landing pages."
   }
 };
 
 function categoryFix(category) {
   return categoryFixes[category.id] || {
-    risk: "This area needs a focused review because the preview found public-facing signals that may require better context, documentation, or supervision.",
-    firstFix: "Review this category with California advertising counsel and document the remediation path.",
+    risk: "This area is worth a closer look because the preview found public-facing signals that may benefit from clearer context, documentation, or supervision.",
+    firstFix: "Review this category and document a simple next-step plan.",
     implementation: [
       "Inventory affected pages and assets.",
       "Confirm the correct disclaimer, substantiation, and approval record.",
@@ -824,7 +824,7 @@ function categoryFix(category) {
       "Attorney approval record.",
       "Before/after screenshots."
     ],
-    serviceNeed: "A full review can separate true issues from noisy public-page signals."
+    serviceNeed: "A guided review can separate true issues from noisy public-page signals."
   };
 }
 
@@ -838,8 +838,8 @@ function renderImplementationBrief(categoryScores) {
   return `
     <section class="implementation-brief">
       <div>
-        <h4>Implementation brief</h4>
-        <p>These are the first fixes a marketing team would need to scope before this looks operationally clean.</p>
+        <h4>First-step action plan</h4>
+        <p>Start here. These are the most useful areas to review before deciding whether you need help with implementation.</p>
       </div>
       <div class="implementation-list">
         ${priorityCategories.map((category) => {
@@ -861,8 +861,8 @@ function renderProduceReportForm() {
   return `
     <section class="produce-report-card">
       <div>
-        <h4>Produce report</h4>
-        <p>Enter contact details to generate a PDF with suggested changes from this scan.</p>
+        <h4>Get free first-step report</h4>
+        <p>Enter contact details to generate a practical PDF summary you can review with your marketing or intake team.</p>
       </div>
       <form id="produceReportForm">
         <label>
@@ -877,9 +877,9 @@ function renderProduceReportForm() {
           <span>Phone</span>
           <input id="reportPhone" type="tel" autocomplete="tel" placeholder="(555) 555-5555" required>
         </label>
-        <button class="button primary" type="submit">Produce report</button>
+        <button class="button primary" type="submit">Create free report</button>
       </form>
-      <p class="form-note" id="produceReportNote">PDF generation runs in this browser for the current scan.</p>
+      <p class="form-note" id="produceReportNote">The PDF is generated in this browser from the current scan.</p>
     </section>
   `;
 }
@@ -952,7 +952,7 @@ function reportLines(contact, reportData) {
   const criticalCount = priorityCategories.filter((category) => category.percent < 60).length;
   const reviewCount = priorityCategories.length;
   const lines = [
-    "SB37 COA Remediation Preview",
+    "SB37 COA First-Step Report",
     "",
     `Website: ${website}`,
     `Detected practice: ${practice}`,
@@ -970,21 +970,21 @@ function reportLines(contact, reportData) {
     `Modules run: ${scoreData.categoryScores.length}`,
     `Words scanned: ${scoreData.wordsScanned}`,
     "",
-    "Executive Readout",
-    `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced review work. ${criticalCount} categories are in priority-review territory.`,
-    "This does not mean the site is noncompliant. It means the public marketing record has claims, workflows, or relationship signals that should be cleaned up and documented before they become expensive to unwind.",
+    "Executive Summary",
+    `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced helpful review items. ${criticalCount} categories should be looked at first.`,
+    "This does not mean the site is noncompliant. It means the scan found public marketing signals where clearer wording, better placement, or simple documentation may improve the firm's marketing record.",
     "",
-    "Why This Becomes Painful",
-    "A law firm website is only one surface. The same language often appears in paid ads, landing pages, chat prompts, intake scripts, CRM automations, vendor pages, and lead-source funnels. If those assets are not inventoried and attorney-approved, fixing the homepage alone leaves the risk trail open.",
+    "Why This Is Worth Reviewing",
+    "A law firm website is only one surface. Similar language may appear in ads, landing pages, chat prompts, intake scripts, CRM automations, vendor pages, and lead-source funnels. A first-step review helps the firm see where marketing language is consistent and where it may need clearer context.",
     "",
-    "Implementation Roadmap",
-    "1. Freeze and inventory: capture the current URLs, landing pages, ads, forms, chat prompts, and intake scripts before edits start.",
-    "2. Prioritize high-risk language: handle results, guarantees, awards, specialization, intake promises, referral language, and vendor pages first.",
-    "3. Add page-level context: move disclaimers and substantiation close to the claims that create the issue.",
-    "4. Create approval evidence: record responsible attorney review, version dates, vendor signoff, and before/after screenshots.",
-    "5. Monitor drift: repeat this after vendors, PPC teams, SEO teams, chat tools, or intake teams make changes.",
+    "Suggested First-Step Workflow",
+    "1. Inventory: capture current URLs, landing pages, ads, forms, chat prompts, and intake scripts.",
+    "2. Prioritize: start with results, guarantees, awards, specialization, intake promises, referral language, and vendor-controlled pages.",
+    "3. Add context: place disclaimers, sources, and claim support near the language that needs it.",
+    "4. Document review: record responsible attorney review, version dates, vendor signoff, and before/after screenshots.",
+    "5. Recheck: repeat the scan after edits or vendor changes.",
     "",
-    "Category Remediation"
+    "Category Notes"
   ];
 
   if (!priorityCategories.length) {
@@ -996,20 +996,19 @@ function reportLines(contact, reportData) {
     lines.push("");
     lines.push(`${index + 1}. ${category.name} (${category.percent}%)`);
     lines.push(`Preview reason: ${categoryPreviewReason(category)}`);
-    lines.push(`Why it matters: ${fix.risk}`);
-    lines.push(`First fix: ${fix.firstFix}`);
-    lines.push("How to implement:");
+    lines.push(`Why review it: ${fix.risk}`);
+    lines.push(`First helpful change: ${fix.firstFix}`);
+    lines.push("How to approach it:");
     fix.implementation.forEach((step) => lines.push(`- ${step}`));
     lines.push("Evidence to keep:");
     fix.evidence.forEach((item) => lines.push(`- ${item}`));
-    lines.push(`Where teams get stuck: ${fix.serviceNeed}`);
+    lines.push(`When to get help: ${fix.serviceNeed}`);
   });
 
   lines.push("");
-  lines.push("Recommended Service Path");
-  lines.push("Phase 1 - Full COA review: crawl public pages, paid landing pages, ad copy, chat/intake flows, referral funnels, and vendor-created content.");
-  lines.push("Phase 2 - Remediation sprint: rewrite risky copy, add claim-level context, build substantiation files, and document attorney approval.");
-  lines.push("Phase 3 - Monitoring: monthly or quarterly checks for page drift, vendor edits, chatbot changes, new ads, and intake-script changes.");
+  lines.push("Suggested Next Step");
+  lines.push("Use this free report as a starting point. If the firm wants help, the optional next step is a focused COA review that checks public pages, paid landing pages, ad copy, chat/intake flows, referral funnels, and vendor-created content.");
+  lines.push("After that, the firm can choose whether to handle edits internally or ask for implementation support and light monitoring.");
   lines.push("");
   lines.push("Important disclaimer: This preliminary report is educational only. It is not legal advice, does not create an attorney-client relationship, and is not a compliance certification.");
   return lines;
