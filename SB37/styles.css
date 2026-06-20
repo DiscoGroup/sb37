@@ -729,26 +729,6 @@ select:focus {
   background: #edf9f8;
 }
 
-.scan-console {
-  display: grid;
-  gap: 6px;
-  width: min(100%, 760px);
-  padding: 14px;
-  border: 1px solid #d8e5e8;
-  border-radius: 8px;
-  color: #445160;
-  background: #f8fbfc;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12px;
-  text-align: left;
-}
-
-.scan-console span::before {
-  content: "> ";
-  color: var(--teal);
-  font-weight: 900;
-}
-
 @keyframes scanSpin {
   to {
     transform: rotate(360deg);

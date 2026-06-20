@@ -601,11 +601,6 @@ function renderScanProgress(website) {
           <span class="${index === 0 ? "active" : ""}">${escapeHtml(category.name)}</span>
         `).join("")}
       </div>
-      <div class="scan-console" aria-hidden="true">
-        <span>crawler.queue: homepage, sitemap, disclaimers, attorneys, results</span>
-        <span>extractors: html, schema, readable text, header/footer, second pass</span>
-        <span>markets: ${signalRules.length} signals across ${categories.length} SB37 modules</span>
-      </div>
     </div>
   `;
 }
