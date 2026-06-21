@@ -1018,10 +1018,15 @@ select:focus {
 .produce-report-card {
   display: grid;
   gap: 14px;
-  padding: 18px;
+  padding: 20px;
   border: 1px solid rgba(7, 140, 134, 0.24);
   border-radius: 8px;
   background: linear-gradient(135deg, #f2fbfa 0%, #ffffff 72%);
+}
+
+.produce-copy {
+  display: grid;
+  gap: 8px;
 }
 
 .example-cta-card {
@@ -1035,13 +1040,29 @@ select:focus {
   background: #f8fbfc;
 }
 
+.next-step-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
 .example-cta-card h4 {
   margin: 0 0 4px;
 }
 
-.example-cta-card p {
+.example-cta-card p,
+.next-step-card p {
   margin: 0;
   color: var(--muted);
+}
+
+.next-step-card h4 {
+  margin: 8px 0 4px;
 }
 
 .implementation-brief {
@@ -1088,7 +1109,9 @@ select:focus {
 }
 
 .produce-report-card h4 {
-  margin: 0 0 4px;
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.12;
 }
 
 .produce-report-card p {
@@ -1123,133 +1146,20 @@ select:focus {
   white-space: nowrap;
 }
 
-.locked-deltas {
-  display: grid;
-  gap: 12px;
+.report-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.locked-card {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 14px;
-  align-items: center;
-  overflow: hidden;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #f9fbfb;
-}
-
-.locked-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.68) 58%, rgba(255, 255, 255, 0.94) 100%);
-  pointer-events: none;
-}
-
-.locked-card.watch {
-  border-color: rgba(197, 106, 22, 0.35);
-  background: #fff8ed;
-}
-
-.locked-card.alert {
-  border-color: rgba(180, 59, 69, 0.3);
-  background: #fff4f5;
-}
-
-.locked-card strong,
-.locked-card p,
-.locked-card .lock-label,
-.locked-card .lock-chip {
-  position: relative;
-  z-index: 1;
-}
-
-.locked-card strong {
-  display: block;
-  margin: 3px 0 4px;
-  font-size: 18px;
-}
-
-.locked-card p {
-  max-width: 620px;
-  margin: 0;
-  color: var(--muted);
-}
-
-.lock-label {
-  color: var(--teal-dark);
-  font-size: 12px;
-  font-weight: 950;
-  text-transform: uppercase;
-}
-
-.lock-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: 6px 12px;
+.report-benefits span {
+  padding: 6px 9px;
+  border: 1px solid rgba(7, 140, 134, 0.18);
   border-radius: 999px;
-  color: var(--white);
-  background: var(--ink);
-  font-size: 13px;
-  font-weight: 950;
-  white-space: nowrap;
-}
-
-.unlock-form {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(170px, 0.7fr) minmax(150px, 0.62fr) auto;
-  gap: 12px;
-  align-items: end;
-  padding: 18px;
-  border: 1px solid rgba(7, 140, 134, 0.22);
-  border-radius: 8px;
-  background: linear-gradient(135deg, #f2fbfa 0%, #ffffff 58%, #fff7ef 100%);
-}
-
-.unlock-form h4 {
-  margin: 2px 0 4px;
-}
-
-.unlock-form p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.unlock-form label {
-  display: grid;
-  gap: 5px;
-  color: var(--muted);
+  color: var(--teal-dark);
+  background: var(--white);
   font-size: 12px;
   font-weight: 900;
-  text-transform: uppercase;
-}
-
-.unlock-form input {
-  width: 100%;
-  min-height: 46px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0 12px;
-  color: var(--ink);
-  background: var(--white);
-  font: inherit;
-  font-size: 15px;
-  text-transform: none;
-}
-
-.unlock-form .button {
-  min-height: 46px;
-  white-space: nowrap;
-}
-
-.unlock-form .unlock-note {
-  grid-column: 1 / -1;
-  font-size: 12px;
 }
 
 .report-stats {
@@ -1745,12 +1655,25 @@ select:focus {
   }
 
   .review-row,
-  .locked-card,
-  .unlock-form,
   .produce-report-card form,
   .example-cta-card,
+  .next-step-card,
   .example-grid {
     grid-template-columns: 1fr;
+  }
+
+  .produce-report-card {
+    padding: 16px;
+  }
+
+  .produce-report-card form {
+    gap: 12px;
+  }
+
+  .produce-report-card .button,
+  .example-cta-card .button,
+  .next-step-card .button {
+    width: 100%;
   }
 
   .example-shell {

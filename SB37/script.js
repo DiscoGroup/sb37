@@ -833,8 +833,8 @@ function renderImplementationBrief(categoryScores) {
   return `
     <section class="implementation-brief">
       <div>
-        <h4>First-step action plan</h4>
-        <p>Start here. These are the most useful areas to review before deciding whether you need help with implementation.</p>
+        <h4>Your free first-step plan</h4>
+        <p>Start with these areas. They are practical review points your marketing or intake team can understand before deciding whether to bring in help.</p>
       </div>
       <div class="implementation-list">
         ${priorityCategories.map((category) => {
@@ -855,9 +855,15 @@ function renderImplementationBrief(categoryScores) {
 function renderProduceReportForm() {
   return `
     <section class="produce-report-card">
-      <div>
-        <h4>Get free first-step report</h4>
-        <p>Enter contact details to generate a practical PDF summary you can review with your marketing or intake team.</p>
+      <div class="produce-copy">
+        <span class="report-badge">Free first step</span>
+        <h4>Send me the PDF report</h4>
+        <p>Get a simple summary of the score, top review areas, and the first fixes to discuss with your website, ads, or intake team.</p>
+        <div class="report-benefits" aria-label="Report includes">
+          <span>Plain-English notes</span>
+          <span>Priority fixes</span>
+          <span>No certification claim</span>
+        </div>
       </div>
       <form id="produceReportForm">
         <label>
@@ -872,9 +878,22 @@ function renderProduceReportForm() {
           <span>Phone</span>
           <input id="reportPhone" type="tel" autocomplete="tel" placeholder="(555) 555-5555" required>
         </label>
-        <button class="button primary" type="submit">Create free report</button>
+        <button class="button primary" type="submit">Create my free PDF</button>
       </form>
-      <p class="form-note" id="produceReportNote">The PDF is generated in this browser from the current scan.</p>
+      <p class="form-note" id="produceReportNote">The PDF is generated in this browser from the current scan. Educational preview only, not legal advice.</p>
+    </section>
+  `;
+}
+
+function renderNextStepCard() {
+  return `
+    <section class="next-step-card">
+      <div>
+        <span class="report-badge">Optional next step</span>
+        <h4>Want the full review later?</h4>
+        <p>The free report covers public website signals. A paid COA review can also look at ads, landing pages, chatbots, intake scripts, CRM messages, referral funnels, vendor pages, and monthly monitoring.</p>
+      </div>
+      <a class="button secondary" href="mailto:hello@costofads.com?subject=SB37%20COA%20Review">Ask about review</a>
     </section>
   `;
 }
@@ -932,6 +951,7 @@ function renderReport({ firmName, website, practice, scoreData }) {
       ${renderImplementationBrief(scoreData.categoryScores)}
       ${renderExampleCta(website, practice)}
       ${renderProduceReportForm()}
+      ${renderNextStepCard()}
       <p class="form-note">Educational preliminary screen only. Not legal advice and not a compliance certification.</p>
     </div>
   `;
@@ -966,14 +986,17 @@ function reportLines(contact, reportData) {
     `Words scanned: ${scoreData.wordsScanned}`,
     "",
     "Executive Summary",
-    `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced helpful review items. ${criticalCount} categories should be looked at first.`,
-    "This does not mean the site is noncompliant. It means the scan found public marketing signals where clearer wording, better placement, or simple documentation may improve the firm's marketing record.",
+    `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced useful review items. ${criticalCount} categories should be looked at first.`,
+    "This does not mean the site is noncompliant. It means the scan found public marketing signals where clearer wording, better placement, or simple documentation may make the marketing record easier to understand and manage.",
     "",
-    "Why This Is Worth Reviewing",
-    "A law firm website is only one surface. Similar language may appear in ads, landing pages, chat prompts, intake scripts, CRM automations, vendor pages, and lead-source funnels. A first-step review helps the firm see where marketing language is consistent and where it may need clearer context.",
+    "What This Free Report Is",
+    "This is a first-step website preview. It is designed to help a firm spot obvious public-facing marketing signals, organize next questions, and decide what to clean up first.",
+    "",
+    "What It Does Not Cover Fully",
+    "A law firm website is only one surface. Similar language may appear in paid ads, landing pages, chat prompts, intake scripts, SMS/email automations, vendor pages, and referral or lead-source funnels. Those items usually need a deeper review.",
     "",
     "Suggested First-Step Workflow",
-    "1. Inventory: capture current URLs, landing pages, ads, forms, chat prompts, and intake scripts.",
+    "1. Inventory: capture the current pages and forms that consumers actually see.",
     "2. Prioritize: start with results, guarantees, awards, specialization, intake promises, referral language, and vendor-controlled pages.",
     "3. Add context: place disclaimers, sources, and claim support near the language that needs it.",
     "4. Document review: record responsible attorney review, version dates, vendor signoff, and before/after screenshots.",
@@ -1002,8 +1025,8 @@ function reportLines(contact, reportData) {
 
   lines.push("");
   lines.push("Suggested Next Step");
-  lines.push("Use this free report as a starting point. If the firm wants help, the optional next step is a focused COA review that checks public pages, paid landing pages, ad copy, chat/intake flows, referral funnels, and vendor-created content.");
-  lines.push("After that, the firm can choose whether to handle edits internally or ask for implementation support and light monitoring.");
+  lines.push("Use this free report as a starting point. The practical next step is to decide which items the firm can handle internally and which items need a focused COA review.");
+  lines.push("A full review can check public pages, paid landing pages, ad copy, chat/intake flows, referral funnels, vendor-created content, and monitoring setup. After that, the firm can choose whether to handle edits internally or ask for implementation support.");
   lines.push("");
   lines.push("Important disclaimer: This preliminary report is educational only. It is not legal advice, does not create an attorney-client relationship, and is not a compliance certification.");
   return lines;
