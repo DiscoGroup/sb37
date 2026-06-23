@@ -1045,7 +1045,7 @@ function addPdfWrappedText(commands, text, x, y, options = {}) {
   const lineHeight = options.lineHeight || size + 4;
   const font = options.font || "F1";
   const color = options.color || "#121927";
-  const lines = pdfWrap(text, maxChars);
+  const lines = pdfWrap(text, maxChars).slice(0, options.maxLines || Infinity);
   lines.forEach((line, index) => {
     commands.push(pdfText(x, y - index * lineHeight, size, line, font, color));
   });
@@ -1055,54 +1055,57 @@ function addPdfWrappedText(commands, text, x, y, options = {}) {
 function buildPdfBlob(report) {
   const commands = [];
   const annotations = [];
+  const pageWidth = 420;
+  const pageHeight = 720;
   const scoreColorValue = scoreColor(report.score);
+  const scoreLabel = report.status.split(/\s+/)[0].toUpperCase();
 
-  commands.push(pdfRect(0, 732, 612, 60, "#121927"));
-  commands.push(pdfRect(0, 720, 612, 12, "#078c86"));
-  commands.push(pdfText(44, 758, 22, "SB37", "F2", "#ffffff"));
-  commands.push(pdfText(116, 762, 10, "COA EXECUTIVE PREVIEW", "F2", "#d7edf4"));
-  commands.push(pdfText(44, 738, 9, "California legal advertising scan | sb37score.com", "F1", "#dbe3e8"));
+  commands.push(pdfRect(0, 656, pageWidth, 64, "#121927"));
+  commands.push(pdfRect(0, 646, pageWidth, 10, "#078c86"));
+  commands.push(pdfText(28, 686, 24, "SB37", "F2", "#ffffff"));
+  commands.push(pdfText(96, 691, 8.5, "COA EXECUTIVE PREVIEW", "F2", "#d7edf4"));
+  commands.push(pdfText(28, 670, 8.5, "California legal advertising scan | sb37score.com", "F1", "#dbe3e8"));
 
-  commands.push(pdfRect(44, 642, 524, 62, "#f3fbfa"));
-  commands.push(pdfRect(44, 642, 7, 62, "#078c86"));
-  commands.push(pdfText(64, 680, 20, report.website, "F2", "#121927"));
-  commands.push(pdfText(64, 662, 10, `Practice: ${report.practice}`, "F1", "#5f6b7b"));
-  commands.push(pdfText(64, 648, 9, report.scope, "F1", "#5f6b7b"));
-  commands.push(pdfRect(470, 654, 72, 36, scoreColorValue));
-  commands.push(pdfText(486, 674, 20, String(report.score), "F2", "#ffffff"));
-  commands.push(pdfText(483, 661, 8, report.status.toUpperCase(), "F2", "#ffffff"));
+  commands.push(pdfRect(28, 574, 364, 56, "#f3fbfa"));
+  commands.push(pdfRect(28, 574, 6, 56, "#078c86"));
+  commands.push(pdfText(44, 608, 15, report.website, "F2", "#121927"));
+  commands.push(pdfText(44, 592, 8.5, `Practice: ${report.practice}`, "F1", "#5f6b7b"));
+  commands.push(pdfText(44, 581, 7.5, report.scope, "F1", "#5f6b7b"));
+  commands.push(pdfRect(330, 591, 46, 25, scoreColorValue));
+  commands.push(pdfText(342, 607, 14, String(report.score), "F2", "#ffffff"));
+  commands.push(pdfText(338, 597, 6.5, scoreLabel, "F2", "#ffffff"));
 
-  commands.push(pdfText(44, 614, 9, `Prepared for: ${report.preparedFor}`, "F2", "#121927"));
-  commands.push(pdfText(44, 600, 9, `Email: ${report.email}`, "F1", "#5f6b7b"));
-  commands.push(pdfText(310, 600, 9, `Phone: ${report.phone}`, "F1", "#5f6b7b"));
-  commands.push(pdfText(310, 614, 9, `Generated: ${report.generated}`, "F1", "#5f6b7b"));
-  commands.push(pdfLine(44, 584, 568, 584));
+  commands.push(pdfText(28, 550, 8.5, `Prepared for: ${report.preparedFor}`, "F2", "#121927"));
+  commands.push(pdfText(28, 537, 8.2, `Email: ${report.email}`, "F1", "#5f6b7b"));
+  commands.push(pdfText(236, 550, 8.2, `Generated: ${report.generated}`, "F1", "#5f6b7b"));
+  commands.push(pdfText(236, 537, 8.2, `Phone: ${report.phone}`, "F1", "#5f6b7b"));
+  commands.push(pdfLine(28, 520, 392, 520));
 
-  commands.push(pdfText(44, 558, 13, "Executive Summary", "F2", "#078c86"));
-  let y = addPdfWrappedText(commands, report.summary, 44, 540, { size: 10, maxChars: 92, color: "#121927" });
-  y = addPdfWrappedText(commands, report.why, 44, y - 8, { size: 10, maxChars: 92, color: "#5f6b7b" });
+  commands.push(pdfText(28, 494, 13, "Executive Summary", "F2", "#078c86"));
+  let y = addPdfWrappedText(commands, report.summary, 28, 476, { size: 9.5, maxChars: 64, lineHeight: 12, color: "#121927" });
+  y = addPdfWrappedText(commands, report.why, 28, y - 6, { size: 8.7, maxChars: 66, lineHeight: 11, color: "#5f6b7b" });
 
-  commands.push(pdfText(44, y - 18, 13, "Top Review Areas", "F2", "#078c86"));
-  y -= 44;
+  commands.push(pdfText(28, y - 16, 13, "Top Review Areas", "F2", "#078c86"));
+  y -= 38;
   report.reviewAreas.slice(0, 3).forEach((area, index) => {
-    commands.push(pdfRect(44, y - 58, 524, 62, index === 0 ? "#fff4f5" : "#f9fbfb"));
-    commands.push(pdfText(60, y - 14, 11, `${index + 1}. ${area.name}`, "F2", "#121927"));
-    const afterReason = addPdfWrappedText(commands, area.reason, 60, y - 30, { size: 8.7, maxChars: 94, lineHeight: 11, color: "#3f4b5a" });
-    addPdfWrappedText(commands, `First move: ${area.move}`, 60, afterReason - 2, { size: 8.7, maxChars: 94, lineHeight: 11, color: "#5f6b7b" });
-    y -= 74;
+    commands.push(pdfRect(28, y - 53, 364, 58, index === 0 ? "#fff4f5" : "#f9fbfb"));
+    commands.push(pdfText(42, y - 13, 10.5, `${index + 1}. ${area.name}`, "F2", "#121927"));
+    const afterReason = addPdfWrappedText(commands, area.reason, 42, y - 28, { size: 8.1, maxChars: 58, lineHeight: 10, maxLines: 2, color: "#3f4b5a" });
+    addPdfWrappedText(commands, `First move: ${area.move}`, 42, afterReason - 1, { size: 7.8, maxChars: 58, lineHeight: 9, maxLines: 2, color: "#5f6b7b" });
+    y -= 68;
   });
 
-  commands.push(pdfRect(44, 100, 524, 92, "#fffdf8"));
-  commands.push(pdfRect(60, 116, 168, 28, "#078c86"));
-  commands.push(pdfText(60, 172, 12, "Recommended First Move", "F2", "#c56a16"));
-  addPdfWrappedText(commands, report.recommendation, 60, 155, { size: 8.7, maxChars: 88, lineHeight: 11, color: "#121927" });
-  commands.push(pdfText(78, 126, 9.5, "Schedule 15-minute review", "F2", "#ffffff"));
-  commands.push(pdfText(244, 125, 8.2, "calendly.com/vnsfirm/15min", "F1", "#078c86"));
-  annotations.push(pdfLinkAnnotation(60, 116, 390, 144, report.calendlyUrl));
+  commands.push(pdfRect(28, 64, 364, 92, "#fffdf8"));
+  commands.push(pdfRect(42, 82, 205, 32, "#078c86"));
+  commands.push(pdfText(42, 136, 12, "Recommended First Move", "F2", "#c56a16"));
+  addPdfWrappedText(commands, report.recommendation, 42, 121, { size: 8.2, maxChars: 57, lineHeight: 10, color: "#121927" });
+  commands.push(pdfText(64, 94, 10, "Schedule 15-minute review", "F2", "#ffffff"));
+  commands.push(pdfText(260, 93, 7.8, "calendly.com/vnsfirm/15min", "F1", "#078c86"));
+  annotations.push(pdfLinkAnnotation(42, 82, 374, 114, report.calendlyUrl));
 
-  commands.push(pdfLine(44, 74, 568, 74));
-  addPdfWrappedText(commands, report.disclaimer, 44, 58, { size: 7.2, maxChars: 124, lineHeight: 9, color: "#5f6b7b" });
-  commands.push(pdfText(44, 30, 7.5, "SB37 Score | sb37score.com", "F2", "#078c86"));
+  commands.push(pdfLine(28, 44, 392, 44));
+  addPdfWrappedText(commands, report.disclaimer, 28, 31, { size: 6.5, maxChars: 92, lineHeight: 8, color: "#5f6b7b" });
+  commands.push(pdfText(28, 12, 7, "SB37 Score | sb37score.com", "F2", "#078c86"));
 
   const objects = [null];
   const addObject = (body) => {
@@ -1117,7 +1120,7 @@ function buildPdfBlob(report) {
   const contentId = addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
   const annotationIds = annotations.map((annotation) => addObject(annotation));
   const annotsRef = annotationIds.length ? ` /Annots [${annotationIds.map((id) => `${id} 0 R`).join(" ")}]` : "";
-  const pageId = addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontId} 0 R /F2 ${boldFontId} 0 R >> >> /Contents ${contentId} 0 R${annotsRef} >>`);
+  const pageId = addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${fontId} 0 R /F2 ${boldFontId} 0 R >> >> /Contents ${contentId} 0 R${annotsRef} >>`);
 
   objects[catalogId] = `<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
   objects[pagesId] = `<< /Type /Pages /Kids [${pageId} 0 R] /Count 1 >>`;
