@@ -7,8 +7,9 @@ This uses Google Sheets + Google Apps Script as a no-cost CRM substitute.
 - Receives form submissions from the SB37 site.
 - Saves leads to a Google Sheet.
 - Sends `chaz@vnsfirm.com` a new lead alert.
-- Sends the prospect an immediate email with the Calendly link.
+- Sends the prospect an immediate receipt email with the Calendly link.
 - Supports Day 1, Day 3, and Day 7 follow-up emails.
+- Skips emails/drips for obvious test leads such as `Test Lead` or `https://example.com`.
 
 ## Setup
 
@@ -46,3 +47,4 @@ To enable Day 1, Day 3, and Day 7 follow-up emails:
 - Gmail/Apps Script has daily sending quotas. This is fine for early lead volume.
 - Do not use this for SMS. Save phone numbers for manual follow-up until you use a compliant SMS platform.
 - The site already collects consent metadata and will send it to this webhook.
+- To allow test submissions to send emails, set `sendEmailsForTestLeads: true` in the script config.

@@ -3,7 +3,8 @@ const CONFIG = {
   alertEmail: "chaz@vnsfirm.com",
   replyToEmail: "chaz@vnsfirm.com",
   senderName: "SB37 COA",
-  calendlyUrl: "https://calendly.com/vnsfirm/15min?back=1&month=2026-06"
+  calendlyUrl: "https://calendly.com/vnsfirm/15min?back=1&month=2026-06",
+  sendEmailsForTestLeads: false
 };
 
 const HEADERS = [
@@ -34,7 +35,9 @@ function doPost(e) {
     const payload = parsePayload_(e);
     const sheet = getSheet_();
     appendLead_(sheet, payload);
-    sendImmediateEmails_(payload);
+    if (!isTestLead_(payload) || CONFIG.sendEmailsForTestLeads) {
+      sendImmediateEmails_(payload);
+    }
 
     return jsonResponse_({ ok: true });
   } catch (error) {
@@ -63,6 +66,7 @@ function runDailyDrip() {
   rows.forEach((row, rowIndex) => {
     const lead = rowToLead_(headers, row);
     if (!lead.email || !lead.createdAt) return;
+    if (isTestLead_(lead) && !CONFIG.sendEmailsForTestLeads) return;
 
     const ageDays = Math.floor((now - new Date(lead.createdAt)) / (24 * 60 * 60 * 1000));
     const sheetRow = rowIndex + 2;
@@ -120,11 +124,11 @@ function sendImmediateEmails_(lead) {
   sendLeadEmail_(lead, "immediate");
   MailApp.sendEmail({
     to: CONFIG.alertEmail,
-    subject: `New SB37 lead: ${lead.website || lead.email}`,
+    subject: `New SB37 report lead: ${lead.website || lead.email}`,
     name: CONFIG.senderName,
     replyTo: CONFIG.replyToEmail,
     htmlBody: `
-      <p><strong>New SB37 lead submitted.</strong></p>
+      <p><strong>New SB37 executive preview lead.</strong></p>
       <p>
         Name: ${escapeHtml_(lead.name)}<br>
         Email: ${escapeHtml_(lead.email)}<br>
@@ -134,6 +138,12 @@ function sendImmediateEmails_(lead) {
         Score: ${escapeHtml_(lead.score)}<br>
         Status: ${escapeHtml_(lead.status)}
       </p>
+      <p>
+        Consent: ${escapeHtml_(lead.consentGiven)}<br>
+        Consent source: ${escapeHtml_(lead.consentSource)}<br>
+        Consent time: ${escapeHtml_(lead.consentTimestamp)}
+      </p>
+      <p>The prospect received a receipt email with the Calendly link.</p>
       <p><a href="${CONFIG.calendlyUrl}">Calendly link</a></p>
     `
   });
@@ -157,11 +167,12 @@ function emailForStage_(lead, stage) {
 
   const messages = {
     immediate: {
-      subject: `Your SB37 executive preview for ${website}`,
+      subject: `Receipt: your SB37 executive preview for ${website}`,
       htmlBody: `
         <p>Hi ${escapeHtml_(name)},</p>
-        <p>Your SB37 executive preview was created for <strong>${escapeHtml_(website)}</strong>. The preview score was <strong>${escapeHtml_(score)}</strong>.</p>
-        <p>The next useful step is a short review of the top findings before changing ads, landing pages, intake scripts, or vendor content.</p>
+        <p>This is your receipt confirming that your SB37 executive preview was created for <strong>${escapeHtml_(website)}</strong>. The preview score was <strong>${escapeHtml_(score)}</strong>.</p>
+        <p>We saved the information you submitted so we can help you review the scan if you choose to schedule a follow-up.</p>
+        <p>The next useful step is a short review of the top findings before changing ads, landing pages, intake scripts, chat, or vendor content.</p>
         <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
         <p>This preview is educational only and is not legal advice or a compliance certification.</p>
       `
@@ -194,6 +205,17 @@ function emailForStage_(lead, stage) {
   };
 
   return messages[stage];
+}
+
+function isTestLead_(lead) {
+  const source = String(lead.consentSource || "").toLowerCase();
+  const name = String(lead.name || "").toLowerCase();
+  const website = String(lead.website || "").toLowerCase();
+  return Boolean(lead.testMode) ||
+    source.indexOf("test") !== -1 ||
+    name === "test lead" ||
+    website === "https://example.com" ||
+    website === "example.com";
 }
 
 function jsonResponse_(data) {
