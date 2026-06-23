@@ -1104,6 +1104,29 @@ select:focus {
   text-transform: none;
 }
 
+.produce-report-card .consent-field {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid rgba(7, 140, 134, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.produce-report-card .consent-field input {
+  width: 18px;
+  min-height: 18px;
+  margin: 1px 0 0;
+}
+
 .produce-report-card .button {
   min-height: 46px;
   white-space: nowrap;

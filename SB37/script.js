@@ -5,6 +5,7 @@ let scanMotionTimer;
 let latestReportData;
 const LEAD_WEBHOOK_URL = "";
 const CALENDLY_URL = "https://calendly.com/vnsfirm/15min?back=1&month=2026-06";
+const LEAD_CONSENT_TEXT = "I consent to SB37 COA and its service providers storing and using my submitted information, website scan data, and report details to contact me by email, phone, and text about this assessment and related services.";
 
 const categories = [
   {
@@ -860,6 +861,10 @@ function renderProduceReportForm() {
           <span>Phone</span>
           <input id="reportPhone" type="tel" autocomplete="tel" placeholder="(555) 555-5555" required>
         </label>
+        <label class="consent-field">
+          <input id="leadConsent" type="checkbox" required>
+          <span>${escapeHtml(LEAD_CONSENT_TEXT)}</span>
+        </label>
         <button class="button primary" type="submit">Create executive PDF</button>
       </form>
       <p class="form-note" id="produceReportNote">The PDF is generated in this browser from the current scan. Educational preview only, not legal advice.</p>
@@ -1063,6 +1068,10 @@ function leadPayload(contact, reportData) {
     pagesScanned: reportData.scoreData.pagesScanned,
     signalsChecked: reportData.scoreData.signalsChecked,
     schedulingUrl: CALENDLY_URL,
+    consentGiven: Boolean(contact.consentGiven),
+    consentText: LEAD_CONSENT_TEXT,
+    consentTimestamp: contact.consentTimestamp,
+    consentSource: "SB37 executive PDF form",
     createdAt: new Date().toISOString()
   };
 }
@@ -1098,8 +1107,15 @@ function wireProduceReportForm() {
     const contact = {
       name: document.querySelector("#reportName").value.trim(),
       email: document.querySelector("#reportEmail").value.trim(),
-      phone: document.querySelector("#reportPhone").value.trim()
+      phone: document.querySelector("#reportPhone").value.trim(),
+      consentGiven: document.querySelector("#leadConsent").checked,
+      consentTimestamp: new Date().toISOString()
     };
+
+    if (!contact.consentGiven) {
+      if (note) note.textContent = "Please check the consent box to create the PDF report.";
+      return;
+    }
 
     if (submitButton) {
       submitButton.disabled = true;
