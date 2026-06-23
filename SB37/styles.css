@@ -769,7 +769,7 @@ select:focus {
 
 .report-result {
   display: grid;
-  gap: 20px;
+  gap: 14px;
 }
 
 .report-score {
@@ -808,9 +808,9 @@ select:focus {
 .score-hero {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 24px;
+  gap: 18px;
   align-items: center;
-  padding: 24px;
+  padding: 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: linear-gradient(145deg, #ffffff, #f3fbfa);
@@ -831,7 +831,7 @@ select:focus {
   position: relative;
   display: grid;
   place-items: center;
-  width: 180px;
+  width: 152px;
   aspect-ratio: 1;
   border-radius: 50%;
   background:
@@ -866,7 +866,7 @@ select:focus {
   height: 20px;
   border-radius: 999px;
   background: var(--ink);
-  transform-origin: 50% 82px;
+  transform-origin: 50% 68px;
   transform: translateX(-50%) rotate(calc(var(--score) - 180deg));
   transition: transform 0.08s linear;
 }
@@ -876,14 +876,14 @@ select:focus {
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 128px;
+  width: 108px;
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--white);
 }
 
 .score-ring-core strong {
-  font-size: 48px;
+  font-size: 40px;
   line-height: 1;
 }
 
@@ -916,6 +916,23 @@ select:focus {
 
 .report-list.compact li {
   padding: 12px 14px;
+}
+
+.report-statline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.report-statline span {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--white);
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .market-board {
@@ -1026,8 +1043,8 @@ select:focus {
 
 .produce-report-card {
   display: grid;
-  gap: 14px;
-  padding: 20px;
+  gap: 12px;
+  padding: 16px;
   border: 1px solid rgba(7, 140, 134, 0.24);
   border-radius: 8px;
   background: linear-gradient(135deg, #f2fbfa 0%, #ffffff 72%);
@@ -1035,7 +1052,7 @@ select:focus {
 
 .produce-copy {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .next-step-card {
@@ -1043,10 +1060,27 @@ select:focus {
   grid-template-columns: 1fr auto;
   gap: 16px;
   align-items: center;
-  padding: 18px;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fffdf8;
+}
+
+.full-breakdown {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fbfb;
+}
+
+.full-breakdown summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 950;
+}
+
+.full-breakdown .market-board {
+  margin-top: 12px;
 }
 
 .next-step-card p {
@@ -1058,52 +1092,9 @@ select:focus {
   margin: 8px 0 4px;
 }
 
-.implementation-brief {
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-  border: 1px solid rgba(180, 59, 69, 0.2);
-  border-radius: 8px;
-  background: #fff8f8;
-}
-
-.implementation-brief h4 {
-  margin: 0 0 4px;
-}
-
-.implementation-brief p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.implementation-list {
-  display: grid;
-  gap: 10px;
-}
-
-.implementation-list article {
-  padding: 14px;
-  border: 1px solid rgba(180, 59, 69, 0.16);
-  border-radius: 8px;
-  background: var(--white);
-}
-
-.implementation-list span {
-  display: block;
-  color: #8f2630;
-  font-size: 12px;
-  font-weight: 950;
-  text-transform: uppercase;
-}
-
-.implementation-list strong {
-  display: block;
-  margin: 5px 0 5px;
-}
-
 .produce-report-card h4 {
   margin: 0;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1.12;
 }
 
@@ -1115,7 +1106,7 @@ select:focus {
 .produce-report-card form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-  gap: 10px;
+  gap: 8px;
   align-items: end;
 }
 
@@ -1153,31 +1144,6 @@ select:focus {
   background: var(--white);
   font-size: 12px;
   font-weight: 900;
-}
-
-.report-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
-.report-stat {
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #f9fbfb;
-}
-
-.report-stat strong {
-  display: block;
-  font-size: 24px;
-}
-
-.report-stat span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
 }
 
 .evidence-grid {
@@ -1682,10 +1648,6 @@ select:focus {
 
   .market-percent {
     text-align: left;
-  }
-
-  .report-stats {
-    grid-template-columns: 1fr;
   }
 
   .evidence-grid {

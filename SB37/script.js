@@ -646,8 +646,8 @@ function categoryPreviewReason(category) {
   return `${uniqueTeasers.join(" ")}${suffix}`;
 }
 
-function renderMarketBoard(categoryScores) {
-  const ordered = [...categoryScores].sort((a, b) => a.percent - b.percent);
+function renderMarketBoard(categoryScores, limit = categoryScores.length) {
+  const ordered = [...categoryScores].sort((a, b) => a.percent - b.percent).slice(0, limit);
   return ordered.map((category) => `
     <div class="review-row ${rowClass(category.percent)}">
       <div>
@@ -658,6 +658,16 @@ function renderMarketBoard(categoryScores) {
       <div class="review-pill">${category.percent}%</div>
     </div>
   `).join("");
+}
+
+function renderCompactStats(scoreData) {
+  return `
+    <div class="report-statline" aria-label="Scan summary">
+      <span>${scoreData.urlsChecked} URLs</span>
+      <span>${scoreData.pagesScanned} pages</span>
+      <span>${scoreData.signalsChecked} signals</span>
+    </div>
+  `;
 }
 
 const categoryFixes = {
@@ -825,35 +835,6 @@ function categoryFix(category) {
   };
 }
 
-function renderImplementationBrief(categoryScores) {
-  const priorityCategories = categoryScores
-    .filter((category) => category.percent < 100)
-    .sort((a, b) => a.percent - b.percent)
-    .slice(0, 3);
-  if (!priorityCategories.length) return "";
-
-  return `
-    <section class="implementation-brief">
-      <div>
-        <h4>Your free first-step plan</h4>
-        <p>Start with these areas. They are practical review points your marketing or intake team can understand before deciding whether to bring in help.</p>
-      </div>
-      <div class="implementation-list">
-        ${priorityCategories.map((category) => {
-          const fix = categoryFix(category);
-          return `
-            <article>
-              <span>${escapeHtml(category.name)} · ${category.percent}%</span>
-              <strong>${escapeHtml(fix.firstFix)}</strong>
-              <p>${escapeHtml(fix.risk)}</p>
-            </article>
-          `;
-        }).join("")}
-      </div>
-    </section>
-  `;
-}
-
 function renderProduceReportForm() {
   return `
     <section class="produce-report-card">
@@ -918,20 +899,18 @@ function renderReport({ firmName, website, practice, scoreData }) {
           <h3>${escapeHtml(firmName || "Website")} scan complete</h3>
           <p>${escapeHtml(website)}</p>
           <p class="form-note">Detected practice: ${escapeHtml(practice)}.</p>
+          ${renderCompactStats(scoreData)}
         </div>
       </div>
-      <div class="report-stats">
-        <div class="report-stat"><strong>${scoreData.urlsChecked}</strong><span>URLs checked</span></div>
-        <div class="report-stat"><strong>${scoreData.pagesScanned}</strong><span>Pages analyzed</span></div>
-        <div class="report-stat"><strong>${scoreData.signalsChecked}</strong><span>Signals checked</span></div>
-        <div class="report-stat"><strong>${scoreData.wordsScanned}</strong><span>Words scanned</span></div>
-      </div>
-      <section>
-        <h4>Breakdown</h4>
-        <div class="market-board">${renderMarketBoard(scoreData.categoryScores)}</div>
-      </section>
-      ${renderImplementationBrief(scoreData.categoryScores)}
       ${renderProduceReportForm()}
+      <section>
+        <h4>Top review areas</h4>
+        <div class="market-board">${renderMarketBoard(scoreData.categoryScores, 3)}</div>
+      </section>
+      <details class="full-breakdown">
+        <summary>View full category breakdown</summary>
+        <div class="market-board">${renderMarketBoard(scoreData.categoryScores)}</div>
+      </details>
       ${renderNextStepCard()}
       <p class="form-note">Educational preliminary screen only. Not legal advice and not a compliance certification.</p>
     </div>
