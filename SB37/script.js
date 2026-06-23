@@ -655,7 +655,6 @@ function renderMarketBoard(categoryScores, limit = categoryScores.length) {
         <span>${reviewLabel(category.percent)}</span>
         <p>${escapeHtml(categoryPreviewReason(category))}</p>
       </div>
-      <div class="review-pill">${category.percent}%</div>
     </div>
   `).join("");
 }
@@ -945,7 +944,7 @@ function reportLines(contact, reportData) {
     `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced review items. This does not mean the site is noncompliant. It means the scan found public marketing signals where clearer wording, better placement, or documentation may be useful.`,
     "",
     "Why It Matters",
-    "Law firm advertising risk usually comes from a few visible patterns: unclear disclaimers, result or award claims without enough context, intake/chat language, vendor-created pages, or referral language. The first step is deciding which items are harmless, which need copy cleanup, and which need attorney review.",
+    "Most advertising review starts with a few visible patterns: disclosures, result or award claims, intake/chat language, vendor pages, and referral language.",
     "",
     "Top 3 Review Areas"
   ];
@@ -957,14 +956,14 @@ function reportLines(contact, reportData) {
   topCategories.forEach((category, index) => {
     const fix = categoryFix(category);
     lines.push("");
-    lines.push(`${index + 1}. ${category.name} (${category.percent}%)`);
+    lines.push(`${index + 1}. ${category.name}`);
     lines.push(categoryPreviewReason(category));
     lines.push(`Suggested first move: ${fix.firstFix}`);
   });
 
   lines.push("");
   lines.push("Recommended First Move");
-  lines.push("Review the top three areas above before changing ads or landing pages. A focused COA review can confirm whether the issue is wording, placement, documentation, attorney approval, vendor control, or a false positive from the scan.");
+  lines.push("Review the top three areas before changing ads or landing pages. A focused COA review can confirm whether the issue is wording, placement, documentation, attorney approval, vendor control, or a false positive.");
   lines.push("");
   lines.push("Schedule Review");
   lines.push(`Schedule a 15-minute review: ${CALENDLY_URL}`);

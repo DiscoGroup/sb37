@@ -985,7 +985,6 @@ select:focus {
 
 .review-row {
   display: grid;
-  grid-template-columns: 1fr auto;
   gap: 12px;
   align-items: center;
   padding: 14px;
@@ -1019,26 +1018,6 @@ select:focus {
 .review-row.alert {
   border-color: rgba(180, 59, 69, 0.3);
   background: #fff4f5;
-}
-
-.review-pill {
-  min-width: 70px;
-  padding: 6px 8px;
-  border-radius: 999px;
-  color: var(--teal-dark);
-  background: var(--sky);
-  font-weight: 950;
-  text-align: center;
-}
-
-.review-row.watch .review-pill {
-  color: #8c4b0d;
-  background: #ffead1;
-}
-
-.review-row.alert .review-pill {
-  color: #8f2630;
-  background: #ffe0e3;
 }
 
 .produce-report-card {
