@@ -8,6 +8,7 @@ This uses Google Sheets + Google Apps Script as a no-cost CRM substitute.
 - Saves leads to a Google Sheet.
 - Sends `chaz@vnsfirm.com` a new lead alert.
 - Sends the prospect an immediate receipt email with the Calendly link.
+- Includes the SB37 Score website link in each email.
 - Supports Day 1, Day 3, and Day 7 follow-up emails.
 - Skips emails/drips for obvious test leads such as `Test Lead` or `https://example.com`.
 

@@ -3,6 +3,7 @@ const CONFIG = {
   alertEmail: "chaz@vnsfirm.com",
   replyToEmail: "chaz@vnsfirm.com",
   senderName: "SB37 COA",
+  siteUrl: "https://sb37score.com",
   calendlyUrl: "https://calendly.com/vnsfirm/15min?back=1&month=2026-06",
   sendEmailsForTestLeads: false
 };
@@ -154,7 +155,10 @@ function sendImmediateEmails_(lead) {
         Consent time: ${escapeHtml_(lead.consentTimestamp)}
       </p>
       <p>Prospect receipt email sent: ${escapeHtml_(prospectEmailSent)}</p>
-      <p><a href="${CONFIG.calendlyUrl}">Calendly link</a></p>
+      <p>
+        <a href="${CONFIG.calendlyUrl}">Calendly link</a><br>
+        <a href="${CONFIG.siteUrl}">SB37 Score website</a>
+      </p>
     `
   });
 }
@@ -190,6 +194,7 @@ function emailForStage_(lead, stage) {
         <p>We saved the information you submitted so we can help you review the scan if you choose to schedule a follow-up.</p>
         <p>The next useful step is a short review of the top findings before changing ads, landing pages, intake scripts, chat, or vendor content.</p>
         <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
+        <p><a href="${CONFIG.siteUrl}">Visit SB37 Score</a></p>
         <p>This preview is educational only and is not legal advice or a compliance certification.</p>
       `
     },
@@ -200,6 +205,7 @@ function emailForStage_(lead, stage) {
         <p>Most law firm marketing reviews start with three practical checks: disclosures near claims, result/award language, and intake or chat language.</p>
         <p>If those areas are clean, the next layer is usually ads, vendor-created landing pages, referral funnels, and monitoring.</p>
         <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
+        <p><a href="${CONFIG.siteUrl}">Visit SB37 Score</a></p>
       `
     },
     day3: {
@@ -208,6 +214,7 @@ function emailForStage_(lead, stage) {
         <p>Hi ${escapeHtml_(name)},</p>
         <p>The website scan is only a first pass. A full COA review looks at the places public visitors may not see: paid ads, landing pages, intake scripts, chat prompts, CRM messages, vendors, and referral flows.</p>
         <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
+        <p><a href="${CONFIG.siteUrl}">Visit SB37 Score</a></p>
       `
     },
     day7: {
@@ -216,6 +223,7 @@ function emailForStage_(lead, stage) {
         <p>Hi ${escapeHtml_(name)},</p>
         <p>If you want to go through the preview findings, we can use a short call to identify what is worth fixing, what is just scan noise, and what should be reviewed more carefully.</p>
         <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
+        <p><a href="${CONFIG.siteUrl}">Visit SB37 Score</a></p>
       `
     }
   };
