@@ -4,6 +4,7 @@ const scanStatus = document.querySelector("#scanStatus");
 let scanMotionTimer;
 let latestReportData;
 const LEAD_WEBHOOK_URL = "";
+const CALENDLY_URL = "https://calendly.com/vnsfirm/15min?back=1&month=2026-06";
 
 const categories = [
   {
@@ -891,10 +892,10 @@ function renderNextStepCard() {
     <section class="next-step-card">
       <div>
         <span class="report-badge">Optional next step</span>
-        <h4>Book a full COA review</h4>
+        <h4>Schedule a 15-minute review</h4>
         <p>The free report covers public website signals. A paid COA review can also look at ads, landing pages, chatbots, intake scripts, CRM messages, referral funnels, vendor pages, and monthly monitoring.</p>
       </div>
-      <a class="button secondary" href="mailto:hello@costofads.com?subject=SB37%20COA%20Review">Book review</a>
+      <a class="button secondary" href="${CALENDLY_URL}" target="_blank" rel="noopener">Schedule time</a>
     </section>
   `;
 }
@@ -1007,6 +1008,7 @@ function reportLines(contact, reportData) {
   lines.push("Suggested Next Step");
   lines.push("Use this free report as a starting point. The practical next step is to decide which items the firm can handle internally and which items need a focused COA review.");
   lines.push("A full review can check public pages, paid landing pages, ad copy, chat/intake flows, referral funnels, vendor-created content, and monitoring setup. After that, the firm can choose whether to handle edits internally or ask for implementation support.");
+  lines.push(`Schedule a 15-minute review: ${CALENDLY_URL}`);
   lines.push("");
   lines.push("Important disclaimer: This preliminary report is educational only. It is not legal advice, does not create an attorney-client relationship, and is not a compliance certification.");
   return lines;
@@ -1101,6 +1103,7 @@ function leadPayload(contact, reportData) {
     urlsChecked: reportData.scoreData.urlsChecked,
     pagesScanned: reportData.scoreData.pagesScanned,
     signalsChecked: reportData.scoreData.signalsChecked,
+    schedulingUrl: CALENDLY_URL,
     createdAt: new Date().toISOString()
   };
 }
@@ -1122,25 +1125,6 @@ async function submitLead(payload) {
     keepalive: true
   });
   return { sent: true };
-}
-
-function reviewMailto(contact, reportData) {
-  const payload = leadPayload(contact, reportData);
-  const subject = `SB37 COA Review - ${reportData.website}`;
-  const body = [
-    "I would like to discuss a full SB37 COA review.",
-    "",
-    `Name: ${payload.name}`,
-    `Email: ${payload.email}`,
-    `Phone: ${payload.phone}`,
-    `Website: ${payload.website}`,
-    `Practice: ${payload.practice}`,
-    `Preview score: ${payload.score}`,
-    `Status: ${payload.status}`,
-    `URLs checked: ${payload.urlsChecked}`,
-    `Pages analyzed: ${payload.pagesScanned}`
-  ].join("\n");
-  return `mailto:hello@costofads.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function wireProduceReportForm() {
@@ -1181,7 +1165,7 @@ function wireProduceReportForm() {
     }
 
     if (note) {
-      note.innerHTML = `PDF created. <a href="${escapeHtml(reviewMailto(contact, latestReportData))}">Book the full review</a> when you are ready.`;
+      note.innerHTML = `PDF created. <a href="${CALENDLY_URL}" target="_blank" rel="noopener">Schedule a 15-minute review</a> to go through the results.`;
     }
     if (submitButton) {
       submitButton.disabled = false;
