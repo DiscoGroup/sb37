@@ -840,12 +840,12 @@ function renderProduceReportForm() {
     <section class="produce-report-card">
       <div class="produce-copy">
         <span class="report-badge">Free first step</span>
-        <h4>Send me the PDF report</h4>
-        <p>Get a simple summary of the score, top review areas, and the first fixes to discuss with your website, ads, or intake team.</p>
+        <h4>Send me the executive PDF</h4>
+        <p>Get a short score summary, the top three review areas, and the recommended first move.</p>
         <div class="report-benefits" aria-label="Report includes">
-          <span>Plain-English notes</span>
-          <span>Priority fixes</span>
-          <span>No certification claim</span>
+          <span>1-page style</span>
+          <span>Top 3 issues</span>
+          <span>Next step</span>
         </div>
       </div>
       <form id="produceReportForm">
@@ -861,7 +861,7 @@ function renderProduceReportForm() {
           <span>Phone</span>
           <input id="reportPhone" type="tel" autocomplete="tel" placeholder="(555) 555-5555" required>
         </label>
-        <button class="button primary" type="submit">Create my free PDF</button>
+        <button class="button primary" type="submit">Create executive PDF</button>
       </form>
       <p class="form-note" id="produceReportNote">The PDF is generated in this browser from the current scan. Educational preview only, not legal advice.</p>
     </section>
@@ -924,10 +924,10 @@ function reportLines(contact, reportData) {
   const priorityCategories = scoreData.categoryScores
     .filter((category) => category.percent < 100)
     .sort((a, b) => a.percent - b.percent);
-  const criticalCount = priorityCategories.filter((category) => category.percent < 60).length;
+  const topCategories = priorityCategories.slice(0, 3);
   const reviewCount = priorityCategories.length;
   const lines = [
-    "SB37 COA First-Step Report",
+    "SB37 COA Executive Preview",
     "",
     `Website: ${website}`,
     `Detected practice: ${practice}`,
@@ -938,58 +938,39 @@ function reportLines(contact, reportData) {
     `Phone: ${contact.phone}`,
     `Generated: ${new Date().toLocaleString()}`,
     "",
-    "Scan Summary",
-    `URLs checked: ${scoreData.urlsChecked}`,
-    `Pages analyzed: ${scoreData.pagesScanned}`,
-    `Signals checked: ${scoreData.signalsChecked}`,
-    `Modules run: ${scoreData.categoryScores.length}`,
-    `Words scanned: ${scoreData.wordsScanned}`,
+    "Preview Scope",
+    `${scoreData.urlsChecked} URLs checked | ${scoreData.pagesScanned} pages analyzed | ${scoreData.signalsChecked} signals reviewed`,
     "",
     "Executive Summary",
-    `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced useful review items. ${criticalCount} categories should be looked at first.`,
-    "This does not mean the site is noncompliant. It means the scan found public marketing signals where clearer wording, better placement, or simple documentation may make the marketing record easier to understand and manage.",
+    `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced review items. This does not mean the site is noncompliant. It means the scan found public marketing signals where clearer wording, better placement, or documentation may be useful.`,
     "",
-    "What This Free Report Is",
-    "This is a first-step website preview. It is designed to help a firm spot obvious public-facing marketing signals, organize next questions, and decide what to clean up first.",
+    "Why It Matters",
+    "Law firm advertising risk usually comes from a few visible patterns: unclear disclaimers, result or award claims without enough context, intake/chat language, vendor-created pages, or referral language. The first step is deciding which items are harmless, which need copy cleanup, and which need attorney review.",
     "",
-    "What It Does Not Cover Fully",
-    "A law firm website is only one surface. Similar language may appear in paid ads, landing pages, chat prompts, intake scripts, SMS/email automations, vendor pages, and referral or lead-source funnels. Those items usually need a deeper review.",
-    "",
-    "Suggested First-Step Workflow",
-    "1. Inventory: capture the current pages and forms that consumers actually see.",
-    "2. Prioritize: start with results, guarantees, awards, specialization, intake promises, referral language, and vendor-controlled pages.",
-    "3. Add context: place disclaimers, sources, and claim support near the language that needs it.",
-    "4. Document review: record responsible attorney review, version dates, vendor signoff, and before/after screenshots.",
-    "5. Recheck: repeat the scan after edits or vendor changes.",
-    "",
-    "Category Notes"
+    "Top 3 Review Areas"
   ];
 
-  if (!priorityCategories.length) {
-    lines.push("No obvious public-facing gaps were surfaced in this preview. Continue verifying disclosures, ads, chat, intake, vendor content, and monitoring records.");
+  if (!topCategories.length) {
+    lines.push("No obvious public-facing gaps were surfaced in this preview. Continue verifying disclosures, ads, chat, intake, vendor content, and monitoring records before relying on the score.");
   }
 
-  priorityCategories.forEach((category, index) => {
+  topCategories.forEach((category, index) => {
     const fix = categoryFix(category);
     lines.push("");
     lines.push(`${index + 1}. ${category.name} (${category.percent}%)`);
-    lines.push(`Preview reason: ${categoryPreviewReason(category)}`);
-    lines.push(`Why review it: ${fix.risk}`);
-    lines.push(`First helpful change: ${fix.firstFix}`);
-    lines.push("How to approach it:");
-    fix.implementation.forEach((step) => lines.push(`- ${step}`));
-    lines.push("Evidence to keep:");
-    fix.evidence.forEach((item) => lines.push(`- ${item}`));
-    lines.push(`When to get help: ${fix.serviceNeed}`);
+    lines.push(categoryPreviewReason(category));
+    lines.push(`Suggested first move: ${fix.firstFix}`);
   });
 
   lines.push("");
-  lines.push("Suggested Next Step");
-  lines.push("Use this free report as a starting point. The practical next step is to decide which items the firm can handle internally and which items need a focused COA review.");
-  lines.push("A full review can check public pages, paid landing pages, ad copy, chat/intake flows, referral funnels, vendor-created content, and monitoring setup. After that, the firm can choose whether to handle edits internally or ask for implementation support.");
+  lines.push("Recommended First Move");
+  lines.push("Review the top three areas above before changing ads or landing pages. A focused COA review can confirm whether the issue is wording, placement, documentation, attorney approval, vendor control, or a false positive from the scan.");
+  lines.push("");
+  lines.push("Schedule Review");
   lines.push(`Schedule a 15-minute review: ${CALENDLY_URL}`);
   lines.push("");
-  lines.push("Important disclaimer: This preliminary report is educational only. It is not legal advice, does not create an attorney-client relationship, and is not a compliance certification.");
+  lines.push("Disclaimer");
+  lines.push("Educational preliminary screen only. Not legal advice, not an attorney-client relationship, and not a compliance certification.");
   return lines;
 }
 
@@ -1148,7 +1129,7 @@ function wireProduceReportForm() {
     }
     if (submitButton) {
       submitButton.disabled = false;
-      submitButton.textContent = "Create my free PDF";
+      submitButton.textContent = "Create executive PDF";
     }
   });
 }
