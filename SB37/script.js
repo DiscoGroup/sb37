@@ -3,6 +3,7 @@ const reportCard = document.querySelector("#reportCard");
 const scanStatus = document.querySelector("#scanStatus");
 let scanMotionTimer;
 let latestReportData;
+const LEAD_WEBHOOK_URL = "";
 
 const categories = [
   {
@@ -890,10 +891,10 @@ function renderNextStepCard() {
     <section class="next-step-card">
       <div>
         <span class="report-badge">Optional next step</span>
-        <h4>Want the full review later?</h4>
+        <h4>Book a full COA review</h4>
         <p>The free report covers public website signals. A paid COA review can also look at ads, landing pages, chatbots, intake scripts, CRM messages, referral funnels, vendor pages, and monthly monitoring.</p>
       </div>
-      <a class="button secondary" href="mailto:hello@costofads.com?subject=SB37%20COA%20Review">Ask about review</a>
+      <a class="button secondary" href="mailto:hello@costofads.com?subject=SB37%20COA%20Review">Book review</a>
     </section>
   `;
 }
@@ -1088,18 +1089,80 @@ function buildPdfBlob(lines) {
   return new Blob([pdf], { type: "application/pdf" });
 }
 
+function leadPayload(contact, reportData) {
+  return {
+    name: contact.name,
+    email: contact.email,
+    phone: contact.phone,
+    website: reportData.website,
+    practice: reportData.practice,
+    score: reportData.scoreData.score,
+    status: levelLabel(reportData.scoreData.level),
+    urlsChecked: reportData.scoreData.urlsChecked,
+    pagesScanned: reportData.scoreData.pagesScanned,
+    signalsChecked: reportData.scoreData.signalsChecked,
+    createdAt: new Date().toISOString()
+  };
+}
+
+async function submitLead(payload) {
+  const storedLeads = JSON.parse(window.localStorage.getItem("sb37Leads") || "[]");
+  storedLeads.push(payload);
+  window.localStorage.setItem("sb37Leads", JSON.stringify(storedLeads.slice(-50)));
+
+  if (!LEAD_WEBHOOK_URL) {
+    return { sent: false };
+  }
+
+  await fetch(LEAD_WEBHOOK_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload),
+    keepalive: true
+  });
+  return { sent: true };
+}
+
+function reviewMailto(contact, reportData) {
+  const payload = leadPayload(contact, reportData);
+  const subject = `SB37 COA Review - ${reportData.website}`;
+  const body = [
+    "I would like to discuss a full SB37 COA review.",
+    "",
+    `Name: ${payload.name}`,
+    `Email: ${payload.email}`,
+    `Phone: ${payload.phone}`,
+    `Website: ${payload.website}`,
+    `Practice: ${payload.practice}`,
+    `Preview score: ${payload.score}`,
+    `Status: ${payload.status}`,
+    `URLs checked: ${payload.urlsChecked}`,
+    `Pages analyzed: ${payload.pagesScanned}`
+  ].join("\n");
+  return `mailto:hello@costofads.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function wireProduceReportForm() {
   const form = document.querySelector("#produceReportForm");
   if (!form) return;
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!latestReportData) return;
 
+    const submitButton = form.querySelector("button[type='submit']");
+    const note = document.querySelector("#produceReportNote");
     const contact = {
       name: document.querySelector("#reportName").value.trim(),
       email: document.querySelector("#reportEmail").value.trim(),
       phone: document.querySelector("#reportPhone").value.trim()
     };
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Creating...";
+    }
+
     const lines = reportLines(contact, latestReportData);
     const blob = buildPdfBlob(lines);
     const link = document.createElement("a");
@@ -1111,8 +1174,19 @@ function wireProduceReportForm() {
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 
-    const note = document.querySelector("#produceReportNote");
-    if (note) note.textContent = "PDF created. Check your downloads folder.";
+    try {
+      await submitLead(leadPayload(contact, latestReportData));
+    } catch (error) {
+      console.warn("Lead submission failed", error);
+    }
+
+    if (note) {
+      note.innerHTML = `PDF created. <a href="${escapeHtml(reviewMailto(contact, latestReportData))}">Book the full review</a> when you are ready.`;
+    }
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = "Create my free PDF";
+    }
   });
 }
 
