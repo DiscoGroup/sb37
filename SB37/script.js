@@ -978,10 +978,10 @@ function executiveReportData(contact, reportData) {
     phone,
     generated: new Date().toLocaleDateString(),
     scope: `${scoreData.urlsChecked} URLs checked | ${scoreData.pagesScanned} pages analyzed | ${scoreData.signalsChecked} signals reviewed`,
-    summary: `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced review items. This does not mean the site is noncompliant; it means the scan found public marketing signals that may need clearer wording, placement, or documentation.`,
-    why: "Most advertising review starts with visible patterns: disclosures, result or award claims, intake/chat language, vendor pages, and referral language.",
+    summary: `${reviewCount} of ${scoreData.categoryScores.length} SB37 areas need a closer look. This preview flags public marketing signals that may need clearer wording, placement, or documentation.`,
+    why: "Primary signals: disclosures, claims, intake/chat, vendor pages, referrals, and attorney responsibility.",
     reviewAreas,
-    recommendation: "Review the top areas before changing ads or landing pages. A focused COA review can confirm whether the issue is wording, placement, documentation, attorney approval, vendor control, or a false positive.",
+    recommendation: "Book a short COA review to confirm the scan, rule out false positives, and identify the first fixes.",
     calendlyUrl: CALENDLY_URL,
     disclaimer: "Educational preliminary screen only. Not legal advice, not an attorney-client relationship, and not a compliance certification."
   };
@@ -1082,26 +1082,24 @@ function buildPdfBlob(report) {
   commands.push(pdfLine(28, 520, 392, 520));
 
   commands.push(pdfText(28, 494, 13, "Executive Summary", "F2", "#078c86"));
-  let y = addPdfWrappedText(commands, report.summary, 28, 476, { size: 9.5, maxChars: 64, lineHeight: 12, color: "#121927" });
-  y = addPdfWrappedText(commands, report.why, 28, y - 6, { size: 8.7, maxChars: 66, lineHeight: 11, color: "#5f6b7b" });
+  let y = addPdfWrappedText(commands, report.summary, 28, 476, { size: 9.5, maxChars: 64, lineHeight: 12, maxLines: 3, color: "#121927" });
+  y = addPdfWrappedText(commands, report.why, 28, y - 4, { size: 8.7, maxChars: 66, lineHeight: 11, maxLines: 2, color: "#5f6b7b" });
 
   commands.push(pdfText(28, y - 16, 13, "Top Review Areas", "F2", "#078c86"));
   y -= 38;
   report.reviewAreas.slice(0, 3).forEach((area, index) => {
-    commands.push(pdfRect(28, y - 53, 364, 58, index === 0 ? "#fff4f5" : "#f9fbfb"));
+    commands.push(pdfRect(28, y - 43, 364, 48, index === 0 ? "#fff4f5" : "#f9fbfb"));
     commands.push(pdfText(42, y - 13, 10.5, `${index + 1}. ${area.name}`, "F2", "#121927"));
-    const afterReason = addPdfWrappedText(commands, area.reason, 42, y - 28, { size: 8.1, maxChars: 58, lineHeight: 10, maxLines: 2, color: "#3f4b5a" });
-    addPdfWrappedText(commands, `First move: ${area.move}`, 42, afterReason - 1, { size: 7.8, maxChars: 58, lineHeight: 9, maxLines: 2, color: "#5f6b7b" });
-    y -= 68;
+    addPdfWrappedText(commands, area.reason, 42, y - 28, { size: 8.1, maxChars: 58, lineHeight: 10, maxLines: 2, color: "#3f4b5a" });
+    y -= 56;
   });
 
-  commands.push(pdfRect(28, 64, 364, 92, "#fffdf8"));
-  commands.push(pdfRect(42, 82, 205, 32, "#078c86"));
-  commands.push(pdfText(42, 136, 12, "Recommended First Move", "F2", "#c56a16"));
-  addPdfWrappedText(commands, report.recommendation, 42, 121, { size: 8.2, maxChars: 57, lineHeight: 10, color: "#121927" });
-  commands.push(pdfText(64, 94, 10, "Schedule 15-minute review", "F2", "#ffffff"));
-  commands.push(pdfText(260, 93, 7.8, "calendly.com/vnsfirm/15min", "F1", "#078c86"));
-  annotations.push(pdfLinkAnnotation(42, 82, 374, 114, report.calendlyUrl));
+  commands.push(pdfRect(28, 72, 364, 70, "#fffdf8"));
+  commands.push(pdfText(42, 121, 12, "Recommended First Move", "F2", "#c56a16"));
+  addPdfWrappedText(commands, report.recommendation, 42, 106, { size: 8.4, maxChars: 58, lineHeight: 10, maxLines: 2, color: "#121927" });
+  commands.push(pdfRect(42, 80, 336, 24, "#078c86"));
+  commands.push(pdfText(137, 88, 10, "Schedule 15-minute review", "F2", "#ffffff"));
+  annotations.push(pdfLinkAnnotation(42, 80, 378, 104, report.calendlyUrl));
 
   commands.push(pdfLine(28, 44, 392, 44));
   addPdfWrappedText(commands, report.disclaimer, 28, 31, { size: 6.5, maxChars: 92, lineHeight: 8, color: "#5f6b7b" });
