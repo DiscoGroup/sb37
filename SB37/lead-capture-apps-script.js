@@ -13,6 +13,9 @@ const HEADERS = [
   "name",
   "email",
   "phone",
+  "phoneCountryCode",
+  "phoneNational",
+  "phoneE164",
   "website",
   "practice",
   "score",
@@ -50,10 +53,24 @@ function doPost(e) {
 
 function setupSb37LeadSheet() {
   const sheet = getSheet_();
-  sheet.clear();
-  sheet.appendRow(HEADERS);
+  ensureHeaders_(sheet);
   sheet.setFrozenRows(1);
-  sheet.autoResizeColumns(1, HEADERS.length);
+  sheet.autoResizeColumns(1, sheet.getLastColumn());
+}
+
+function ensureHeaders_(sheet) {
+  const existingHeaders = sheet.getLastColumn()
+    ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    : [];
+  if (!existingHeaders.filter(Boolean).length) {
+    sheet.appendRow(HEADERS);
+  } else {
+    HEADERS.forEach((header) => {
+      if (existingHeaders.indexOf(header) === -1) {
+        sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header);
+      }
+    });
+  }
 }
 
 function runDailyDrip() {
@@ -105,6 +122,15 @@ function validateLead_(lead) {
   if (!lead.email) {
     throw new Error("Missing required lead email");
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(lead.email))) {
+    throw new Error("Invalid lead email");
+  }
+  if (lead.phoneCountryCode !== "+1") {
+    throw new Error("Missing required USA +1 phone country code");
+  }
+  if (!/^\+1\d{10}$/.test(String(lead.phoneE164 || ""))) {
+    throw new Error("Invalid USA +1 phone number");
+  }
 }
 
 function getSheet_() {
@@ -119,8 +145,10 @@ function getSheet_() {
 }
 
 function appendLead_(sheet, payload) {
-  const row = HEADERS.map((header) => payload[header] || "");
-  row[HEADERS.indexOf("immediateSentAt")] = new Date().toISOString();
+  ensureHeaders_(sheet);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const row = headers.map((header) => payload[header] || "");
+  row[headers.indexOf("immediateSentAt")] = new Date().toISOString();
   sheet.appendRow(row);
 }
 
@@ -143,7 +171,8 @@ function sendImmediateEmails_(lead) {
       <p>
         Name: ${escapeHtml_(lead.name)}<br>
         Email: ${escapeHtml_(lead.email)}<br>
-        Phone: ${escapeHtml_(lead.phone)}<br>
+        Phone: ${escapeHtml_(lead.phoneE164 || lead.phone)}<br>
+        Country code: ${escapeHtml_(lead.phoneCountryCode)}<br>
         Website: ${escapeHtml_(lead.website)}<br>
         Practice: ${escapeHtml_(lead.practice)}<br>
         Score: ${escapeHtml_(lead.score)}<br>

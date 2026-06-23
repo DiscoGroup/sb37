@@ -193,6 +193,25 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function phoneDigits(value) {
+  return String(value).replace(/\D/g, "");
+}
+
+function normalizeUsPhone(value) {
+  const digits = phoneDigits(value);
+  const national = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  if (national.length !== 10) return null;
+  return {
+    countryCode: "+1",
+    national,
+    e164: `+1${national}`
+  };
+}
+
 function countMatches(text, pattern) {
   return Array.from(text.matchAll(pattern)).length;
 }
@@ -857,9 +876,14 @@ function renderProduceReportForm() {
           <span>Email</span>
           <input id="reportEmail" type="email" autocomplete="email" placeholder="name@firm.com" required>
         </label>
-        <label>
+        <label class="phone-field">
           <span>Phone</span>
-          <input id="reportPhone" type="tel" autocomplete="tel" placeholder="(555) 555-5555" required>
+          <div>
+            <select id="phoneCountryCode" aria-label="Phone country code" required>
+              <option value="+1" selected>USA +1</option>
+            </select>
+            <input id="reportPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(555) 555-5555" required>
+          </div>
         </label>
         <label class="consent-field">
           <input id="leadConsent" type="checkbox" required>
@@ -939,7 +963,7 @@ function reportLines(contact, reportData) {
     `Status: ${levelLabel(scoreData.level)}`,
     `Prepared for: ${contact.name}`,
     `Email: ${contact.email}`,
-    `Phone: ${contact.phone}`,
+    `Phone: ${contact.phoneE164 || `${contact.phoneCountryCode || ""} ${contact.phone}`.trim()}`,
     `Generated: ${new Date().toLocaleString()}`,
     "",
     "Preview Scope",
@@ -1060,6 +1084,9 @@ function leadPayload(contact, reportData) {
     name: contact.name,
     email: contact.email,
     phone: contact.phone,
+    phoneCountryCode: contact.phoneCountryCode,
+    phoneNational: contact.phoneNational,
+    phoneE164: contact.phoneE164,
     website: reportData.website,
     practice: reportData.practice,
     score: reportData.scoreData.score,
@@ -1104,16 +1131,39 @@ function wireProduceReportForm() {
 
     const submitButton = form.querySelector("button[type='submit']");
     const note = document.querySelector("#produceReportNote");
+    const phone = normalizeUsPhone(document.querySelector("#reportPhone").value);
     const contact = {
       name: document.querySelector("#reportName").value.trim(),
       email: document.querySelector("#reportEmail").value.trim(),
       phone: document.querySelector("#reportPhone").value.trim(),
+      phoneCountryCode: document.querySelector("#phoneCountryCode").value,
+      phoneNational: phone ? phone.national : "",
+      phoneE164: phone ? phone.e164 : "",
       consentGiven: document.querySelector("#leadConsent").checked,
       consentTimestamp: new Date().toISOString()
     };
 
+    if (!contact.name || !contact.email || !contact.phone || !contact.phoneCountryCode) {
+      if (note) note.textContent = "Please complete every field to create the PDF report.";
+      form.reportValidity();
+      return;
+    }
+
+    if (!isValidEmail(contact.email)) {
+      if (note) note.textContent = "Please enter a valid email address.";
+      document.querySelector("#reportEmail").focus();
+      return;
+    }
+
+    if (contact.phoneCountryCode !== "+1" || !phone) {
+      if (note) note.textContent = "Please enter a valid USA +1 phone number.";
+      document.querySelector("#reportPhone").focus();
+      return;
+    }
+
     if (!contact.consentGiven) {
       if (note) note.textContent = "Please check the consent box to create the PDF report.";
+      form.reportValidity();
       return;
     }
 

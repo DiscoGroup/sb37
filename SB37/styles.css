@@ -1104,6 +1104,22 @@ select:focus {
   text-transform: none;
 }
 
+.produce-report-card select {
+  min-height: 46px;
+  font-size: 15px;
+}
+
+.phone-field div {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.phone-field select,
+.phone-field input {
+  width: 100%;
+}
+
 .produce-report-card .consent-field {
   grid-column: 1 / -1;
   display: grid;
