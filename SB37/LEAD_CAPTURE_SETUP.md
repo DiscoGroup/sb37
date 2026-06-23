@@ -48,3 +48,4 @@ To enable Day 1, Day 3, and Day 7 follow-up emails:
 - Do not use this for SMS. Save phone numbers for manual follow-up until you use a compliant SMS platform.
 - The site already collects consent metadata and will send it to this webhook.
 - To allow test submissions to send emails, set `sendEmailsForTestLeads: true` in the script config.
+- Only run `setupSb37LeadSheet` manually from the Apps Script editor. Do not manually run `sendLeadEmail_`, `sendImmediateEmails_`, or `doPost`; those need a lead payload from the website.

@@ -33,6 +33,7 @@ const HEADERS = [
 function doPost(e) {
   try {
     const payload = parsePayload_(e);
+    validateLead_(payload);
     const sheet = getSheet_();
     appendLead_(sheet, payload);
     if (!isTestLead_(payload) || CONFIG.sendEmailsForTestLeads) {
@@ -72,18 +73,21 @@ function runDailyDrip() {
     const sheetRow = rowIndex + 2;
 
     if (ageDays >= 1 && !lead.day1SentAt) {
-      sendLeadEmail_(lead, "day1");
-      sheet.getRange(sheetRow, headers.indexOf("day1SentAt") + 1).setValue(new Date().toISOString());
+      if (sendLeadEmail_(lead, "day1")) {
+        sheet.getRange(sheetRow, headers.indexOf("day1SentAt") + 1).setValue(new Date().toISOString());
+      }
     }
 
     if (ageDays >= 3 && !lead.day3SentAt) {
-      sendLeadEmail_(lead, "day3");
-      sheet.getRange(sheetRow, headers.indexOf("day3SentAt") + 1).setValue(new Date().toISOString());
+      if (sendLeadEmail_(lead, "day3")) {
+        sheet.getRange(sheetRow, headers.indexOf("day3SentAt") + 1).setValue(new Date().toISOString());
+      }
     }
 
     if (ageDays >= 7 && !lead.day7SentAt) {
-      sendLeadEmail_(lead, "day7");
-      sheet.getRange(sheetRow, headers.indexOf("day7SentAt") + 1).setValue(new Date().toISOString());
+      if (sendLeadEmail_(lead, "day7")) {
+        sheet.getRange(sheetRow, headers.indexOf("day7SentAt") + 1).setValue(new Date().toISOString());
+      }
     }
   });
 }
@@ -94,6 +98,12 @@ function parsePayload_(e) {
   payload.createdAt = payload.createdAt || new Date().toISOString();
   payload.schedulingUrl = payload.schedulingUrl || CONFIG.calendlyUrl;
   return payload;
+}
+
+function validateLead_(lead) {
+  if (!lead.email) {
+    throw new Error("Missing required lead email");
+  }
 }
 
 function getSheet_() {
@@ -121,7 +131,7 @@ function rowToLead_(headers, row) {
 }
 
 function sendImmediateEmails_(lead) {
-  sendLeadEmail_(lead, "immediate");
+  const prospectEmailSent = sendLeadEmail_(lead, "immediate");
   MailApp.sendEmail({
     to: CONFIG.alertEmail,
     subject: `New SB37 report lead: ${lead.website || lead.email}`,
@@ -143,13 +153,18 @@ function sendImmediateEmails_(lead) {
         Consent source: ${escapeHtml_(lead.consentSource)}<br>
         Consent time: ${escapeHtml_(lead.consentTimestamp)}
       </p>
-      <p>The prospect received a receipt email with the Calendly link.</p>
+      <p>Prospect receipt email sent: ${escapeHtml_(prospectEmailSent)}</p>
       <p><a href="${CONFIG.calendlyUrl}">Calendly link</a></p>
     `
   });
 }
 
 function sendLeadEmail_(lead, stage) {
+  if (!lead || !lead.email) {
+    console.warn(`Skipped ${stage || "unknown"} email because recipient email was blank.`);
+    return false;
+  }
+
   const message = emailForStage_(lead, stage);
   MailApp.sendEmail({
     to: lead.email,
@@ -158,6 +173,7 @@ function sendLeadEmail_(lead, stage) {
     replyTo: CONFIG.replyToEmail,
     htmlBody: message.htmlBody
   });
+  return true;
 }
 
 function emailForStage_(lead, stage) {
