@@ -952,7 +952,7 @@ function executiveReportData(contact, reportData) {
   const priorityCategories = scoreData.categoryScores
     .filter((category) => category.percent < 100)
     .sort((a, b) => a.percent - b.percent);
-  const topCategories = priorityCategories.slice(0, 3);
+  const topCategories = priorityCategories.slice(0, 5);
   const reviewCount = priorityCategories.length;
   const phone = contact.phoneE164 || `${contact.phoneCountryCode || ""} ${contact.phone}`.trim();
   const reviewAreas = topCategories.length
@@ -1087,11 +1087,11 @@ function buildPdfBlob(report) {
 
   commands.push(pdfText(28, y - 16, 13, "Top Review Areas", "F2", "#078c86"));
   y -= 38;
-  report.reviewAreas.slice(0, 3).forEach((area, index) => {
-    commands.push(pdfRect(28, y - 43, 364, 48, index === 0 ? "#fff4f5" : "#f9fbfb"));
+  report.reviewAreas.slice(0, 5).forEach((area, index) => {
+    commands.push(pdfRect(28, y - 28, 364, 33, index === 0 ? "#fff4f5" : "#f9fbfb"));
     commands.push(pdfText(42, y - 13, 10.5, `${index + 1}. ${area.name}`, "F2", "#121927"));
-    addPdfWrappedText(commands, area.reason, 42, y - 28, { size: 8.1, maxChars: 58, lineHeight: 10, maxLines: 2, color: "#3f4b5a" });
-    y -= 56;
+    addPdfWrappedText(commands, area.reason, 42, y - 25, { size: 7.8, maxChars: 76, lineHeight: 9, maxLines: 1, color: "#3f4b5a" });
+    y -= 39;
   });
 
   commands.push(pdfRect(28, 72, 364, 70, "#fffdf8"));
