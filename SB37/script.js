@@ -947,59 +947,44 @@ function renderReport({ firmName, website, practice, scoreData }) {
   wireProduceReportForm();
 }
 
-function reportLines(contact, reportData) {
+function executiveReportData(contact, reportData) {
   const { website, practice, scoreData } = reportData;
   const priorityCategories = scoreData.categoryScores
     .filter((category) => category.percent < 100)
     .sort((a, b) => a.percent - b.percent);
   const topCategories = priorityCategories.slice(0, 3);
   const reviewCount = priorityCategories.length;
-  const lines = [
-    "SB37 COA Executive Preview",
-    "",
-    `Website: ${website}`,
-    `Detected practice: ${practice}`,
-    `SB37 score: ${scoreData.score}`,
-    `Status: ${levelLabel(scoreData.level)}`,
-    `Prepared for: ${contact.name}`,
-    `Email: ${contact.email}`,
-    `Phone: ${contact.phoneE164 || `${contact.phoneCountryCode || ""} ${contact.phone}`.trim()}`,
-    `Generated: ${new Date().toLocaleString()}`,
-    "",
-    "Preview Scope",
-    `${scoreData.urlsChecked} URLs checked | ${scoreData.pagesScanned} pages analyzed | ${scoreData.signalsChecked} signals reviewed`,
-    "",
-    "Executive Summary",
-    `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced review items. This does not mean the site is noncompliant. It means the scan found public marketing signals where clearer wording, better placement, or documentation may be useful.`,
-    "",
-    "Why It Matters",
-    "Most advertising review starts with a few visible patterns: disclosures, result or award claims, intake/chat language, vendor pages, and referral language.",
-    "",
-    "Top 3 Review Areas"
-  ];
+  const phone = contact.phoneE164 || `${contact.phoneCountryCode || ""} ${contact.phone}`.trim();
+  const reviewAreas = topCategories.length
+    ? topCategories.map((category) => ({
+      name: category.name,
+      reason: categoryPreviewReason(category),
+      move: categoryFix(category).firstFix
+    }))
+    : [{
+      name: "No obvious priority area",
+      reason: "No obvious public-facing gaps were surfaced in this preview.",
+      move: "Continue verifying disclosures, ads, chat, intake, vendor content, and monitoring records before relying on the score."
+    }];
 
-  if (!topCategories.length) {
-    lines.push("No obvious public-facing gaps were surfaced in this preview. Continue verifying disclosures, ads, chat, intake, vendor content, and monitoring records before relying on the score.");
-  }
-
-  topCategories.forEach((category, index) => {
-    const fix = categoryFix(category);
-    lines.push("");
-    lines.push(`${index + 1}. ${category.name}`);
-    lines.push(categoryPreviewReason(category));
-    lines.push(`Suggested first move: ${fix.firstFix}`);
-  });
-
-  lines.push("");
-  lines.push("Recommended First Move");
-  lines.push("Review the top three areas before changing ads or landing pages. A focused COA review can confirm whether the issue is wording, placement, documentation, attorney approval, vendor control, or a false positive.");
-  lines.push("");
-  lines.push("Schedule Review");
-  lines.push(`Schedule a 15-minute review: ${CALENDLY_URL}`);
-  lines.push("");
-  lines.push("Disclaimer");
-  lines.push("Educational preliminary screen only. Not legal advice, not an attorney-client relationship, and not a compliance certification.");
-  return lines;
+  return {
+    title: "SB37 COA Executive Preview",
+    website,
+    practice,
+    score: scoreData.score,
+    status: levelLabel(scoreData.level),
+    preparedFor: contact.name,
+    email: contact.email,
+    phone,
+    generated: new Date().toLocaleDateString(),
+    scope: `${scoreData.urlsChecked} URLs checked | ${scoreData.pagesScanned} pages analyzed | ${scoreData.signalsChecked} signals reviewed`,
+    summary: `${reviewCount} of ${scoreData.categoryScores.length} SB37 categories surfaced review items. This does not mean the site is noncompliant; it means the scan found public marketing signals that may need clearer wording, placement, or documentation.`,
+    why: "Most advertising review starts with visible patterns: disclosures, result or award claims, intake/chat language, vendor pages, and referral language.",
+    reviewAreas,
+    recommendation: "Review the top areas before changing ads or landing pages. A focused COA review can confirm whether the issue is wording, placement, documentation, attorney approval, vendor control, or a false positive.",
+    calendlyUrl: CALENDLY_URL,
+    disclaimer: "Educational preliminary screen only. Not legal advice, not an attorney-client relationship, and not a compliance certification."
+  };
 }
 
 function wrapPdfLine(line, maxLength = 88) {
@@ -1028,20 +1013,89 @@ function escapePdfText(value) {
     .replace(/\)/g, "\\)");
 }
 
-function buildPdfBlob(lines) {
-  const pageLines = [];
-  let currentPage = [];
-  lines.forEach((line) => {
-    const wrapped = line ? wrapPdfLine(line) : [""];
-    wrapped.forEach((wrappedLine) => {
-      if (currentPage.length >= 48) {
-        pageLines.push(currentPage);
-        currentPage = [];
-      }
-      currentPage.push(wrappedLine);
-    });
+function pdfColor(hex) {
+  const clean = hex.replace("#", "");
+  const parts = [0, 2, 4].map((start) => parseInt(clean.slice(start, start + 2), 16) / 255);
+  return parts.map((part) => part.toFixed(3)).join(" ");
+}
+
+function pdfText(x, y, size, text, font = "F1", color = "#121927") {
+  return `BT /${font} ${size} Tf ${pdfColor(color)} rg ${x} ${y} Td (${escapePdfText(text)}) Tj ET`;
+}
+
+function pdfRect(x, y, width, height, color) {
+  return `${pdfColor(color)} rg ${x} ${y} ${width} ${height} re f`;
+}
+
+function pdfLine(x1, y1, x2, y2, color = "#dbe3e8", width = 1) {
+  return `${pdfColor(color)} RG ${width} w ${x1} ${y1} m ${x2} ${y2} l S`;
+}
+
+function pdfWrap(text, maxChars) {
+  return wrapPdfLine(text, maxChars).filter(Boolean);
+}
+
+function addPdfWrappedText(commands, text, x, y, options = {}) {
+  const size = options.size || 10;
+  const maxChars = options.maxChars || 78;
+  const lineHeight = options.lineHeight || size + 4;
+  const font = options.font || "F1";
+  const color = options.color || "#121927";
+  const lines = pdfWrap(text, maxChars);
+  lines.forEach((line, index) => {
+    commands.push(pdfText(x, y - index * lineHeight, size, line, font, color));
   });
-  if (currentPage.length) pageLines.push(currentPage);
+  return y - lines.length * lineHeight;
+}
+
+function buildPdfBlob(report) {
+  const commands = [];
+  const scoreColorValue = scoreColor(report.score);
+
+  commands.push(pdfRect(0, 732, 612, 60, "#121927"));
+  commands.push(pdfRect(0, 720, 612, 12, "#078c86"));
+  commands.push(pdfText(44, 758, 22, "SB37", "F2", "#ffffff"));
+  commands.push(pdfText(116, 762, 10, "COA EXECUTIVE PREVIEW", "F2", "#d7edf4"));
+  commands.push(pdfText(44, 738, 9, "California legal advertising scan | sb37score.com", "F1", "#dbe3e8"));
+
+  commands.push(pdfRect(44, 642, 524, 62, "#f3fbfa"));
+  commands.push(pdfRect(44, 642, 7, 62, "#078c86"));
+  commands.push(pdfText(64, 680, 20, report.website, "F2", "#121927"));
+  commands.push(pdfText(64, 662, 10, `Practice: ${report.practice}`, "F1", "#5f6b7b"));
+  commands.push(pdfText(64, 648, 9, report.scope, "F1", "#5f6b7b"));
+  commands.push(pdfRect(470, 654, 72, 36, scoreColorValue));
+  commands.push(pdfText(486, 674, 20, String(report.score), "F2", "#ffffff"));
+  commands.push(pdfText(483, 661, 8, report.status.toUpperCase(), "F2", "#ffffff"));
+
+  commands.push(pdfText(44, 614, 9, `Prepared for: ${report.preparedFor}`, "F2", "#121927"));
+  commands.push(pdfText(44, 600, 9, `Email: ${report.email}`, "F1", "#5f6b7b"));
+  commands.push(pdfText(310, 600, 9, `Phone: ${report.phone}`, "F1", "#5f6b7b"));
+  commands.push(pdfText(310, 614, 9, `Generated: ${report.generated}`, "F1", "#5f6b7b"));
+  commands.push(pdfLine(44, 584, 568, 584));
+
+  commands.push(pdfText(44, 558, 13, "Executive Summary", "F2", "#078c86"));
+  let y = addPdfWrappedText(commands, report.summary, 44, 540, { size: 10, maxChars: 92, color: "#121927" });
+  y = addPdfWrappedText(commands, report.why, 44, y - 8, { size: 10, maxChars: 92, color: "#5f6b7b" });
+
+  commands.push(pdfText(44, y - 18, 13, "Top Review Areas", "F2", "#078c86"));
+  y -= 44;
+  report.reviewAreas.slice(0, 3).forEach((area, index) => {
+    commands.push(pdfRect(44, y - 58, 524, 62, index === 0 ? "#fff4f5" : "#f9fbfb"));
+    commands.push(pdfText(60, y - 14, 11, `${index + 1}. ${area.name}`, "F2", "#121927"));
+    const afterReason = addPdfWrappedText(commands, area.reason, 60, y - 30, { size: 8.7, maxChars: 94, lineHeight: 11, color: "#3f4b5a" });
+    addPdfWrappedText(commands, `First move: ${area.move}`, 60, afterReason - 2, { size: 8.7, maxChars: 94, lineHeight: 11, color: "#5f6b7b" });
+    y -= 74;
+  });
+
+  commands.push(pdfRect(44, 110, 524, 74, "#fffdf8"));
+  commands.push(pdfText(60, 164, 12, "Recommended First Move", "F2", "#c56a16"));
+  addPdfWrappedText(commands, report.recommendation, 60, 148, { size: 9, maxChars: 90, lineHeight: 12, color: "#121927" });
+  commands.push(pdfText(60, 118, 9, "Schedule: ", "F2", "#121927"));
+  commands.push(pdfText(106, 118, 9, report.calendlyUrl, "F1", "#078c86"));
+
+  commands.push(pdfLine(44, 84, 568, 84));
+  addPdfWrappedText(commands, report.disclaimer, 44, 66, { size: 7.5, maxChars: 120, lineHeight: 10, color: "#5f6b7b" });
+  commands.push(pdfText(44, 36, 7.5, "SB37 Score | sb37score.com", "F2", "#078c86"));
 
   const objects = [null];
   const addObject = (body) => {
@@ -1051,18 +1105,13 @@ function buildPdfBlob(lines) {
   const catalogId = addObject("");
   const pagesId = addObject("");
   const fontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-  const pageIds = [];
-
-  pageLines.forEach((page) => {
-    const text = page.map((line) => `(${escapePdfText(line)}) Tj T*`).join("\n");
-    const stream = `BT /F1 10 Tf 50 760 Td 14 TL\n${text}\nET`;
-    const contentId = addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
-    const pageId = addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontId} 0 R >> >> /Contents ${contentId} 0 R >>`);
-    pageIds.push(pageId);
-  });
+  const boldFontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+  const stream = commands.join("\n");
+  const contentId = addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+  const pageId = addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontId} 0 R /F2 ${boldFontId} 0 R >> >> /Contents ${contentId} 0 R >>`);
 
   objects[catalogId] = `<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
-  objects[pagesId] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageIds.length} >>`;
+  objects[pagesId] = `<< /Type /Pages /Kids [${pageId} 0 R] /Count 1 >>`;
 
   let pdf = "%PDF-1.4\n";
   const offsets = [0];
@@ -1172,8 +1221,8 @@ function wireProduceReportForm() {
       submitButton.textContent = "Creating...";
     }
 
-    const lines = reportLines(contact, latestReportData);
-    const blob = buildPdfBlob(lines);
+    const report = executiveReportData(contact, latestReportData);
+    const blob = buildPdfBlob(report);
     const link = document.createElement("a");
     const domain = latestReportData.website.replace(/^https?:\/\//i, "").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "sb37-report";
     link.href = URL.createObjectURL(blob);
