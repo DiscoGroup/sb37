@@ -1031,6 +1031,10 @@ function pdfLine(x1, y1, x2, y2, color = "#dbe3e8", width = 1) {
   return `${pdfColor(color)} RG ${width} w ${x1} ${y1} m ${x2} ${y2} l S`;
 }
 
+function pdfLinkAnnotation(x1, y1, x2, y2, url) {
+  return `<< /Type /Annot /Subtype /Link /Rect [${x1} ${y1} ${x2} ${y2}] /Border [0 0 0] /A << /S /URI /URI (${escapePdfText(url)}) >> >>`;
+}
+
 function pdfWrap(text, maxChars) {
   return wrapPdfLine(text, maxChars).filter(Boolean);
 }
@@ -1050,6 +1054,7 @@ function addPdfWrappedText(commands, text, x, y, options = {}) {
 
 function buildPdfBlob(report) {
   const commands = [];
+  const annotations = [];
   const scoreColorValue = scoreColor(report.score);
 
   commands.push(pdfRect(0, 732, 612, 60, "#121927"));
@@ -1087,15 +1092,17 @@ function buildPdfBlob(report) {
     y -= 74;
   });
 
-  commands.push(pdfRect(44, 110, 524, 74, "#fffdf8"));
-  commands.push(pdfText(60, 164, 12, "Recommended First Move", "F2", "#c56a16"));
-  addPdfWrappedText(commands, report.recommendation, 60, 148, { size: 9, maxChars: 90, lineHeight: 12, color: "#121927" });
-  commands.push(pdfText(60, 118, 9, "Schedule: ", "F2", "#121927"));
-  commands.push(pdfText(106, 118, 9, report.calendlyUrl, "F1", "#078c86"));
+  commands.push(pdfRect(44, 100, 524, 92, "#fffdf8"));
+  commands.push(pdfRect(60, 116, 168, 28, "#078c86"));
+  commands.push(pdfText(60, 172, 12, "Recommended First Move", "F2", "#c56a16"));
+  addPdfWrappedText(commands, report.recommendation, 60, 155, { size: 8.7, maxChars: 88, lineHeight: 11, color: "#121927" });
+  commands.push(pdfText(78, 126, 9.5, "Schedule 15-minute review", "F2", "#ffffff"));
+  commands.push(pdfText(244, 125, 8.2, "calendly.com/vnsfirm/15min", "F1", "#078c86"));
+  annotations.push(pdfLinkAnnotation(60, 116, 390, 144, report.calendlyUrl));
 
-  commands.push(pdfLine(44, 84, 568, 84));
-  addPdfWrappedText(commands, report.disclaimer, 44, 66, { size: 7.5, maxChars: 120, lineHeight: 10, color: "#5f6b7b" });
-  commands.push(pdfText(44, 36, 7.5, "SB37 Score | sb37score.com", "F2", "#078c86"));
+  commands.push(pdfLine(44, 74, 568, 74));
+  addPdfWrappedText(commands, report.disclaimer, 44, 58, { size: 7.2, maxChars: 124, lineHeight: 9, color: "#5f6b7b" });
+  commands.push(pdfText(44, 30, 7.5, "SB37 Score | sb37score.com", "F2", "#078c86"));
 
   const objects = [null];
   const addObject = (body) => {
@@ -1108,7 +1115,9 @@ function buildPdfBlob(report) {
   const boldFontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
   const stream = commands.join("\n");
   const contentId = addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
-  const pageId = addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontId} 0 R /F2 ${boldFontId} 0 R >> >> /Contents ${contentId} 0 R >>`);
+  const annotationIds = annotations.map((annotation) => addObject(annotation));
+  const annotsRef = annotationIds.length ? ` /Annots [${annotationIds.map((id) => `${id} 0 R`).join(" ")}]` : "";
+  const pageId = addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontId} 0 R /F2 ${boldFontId} 0 R >> >> /Contents ${contentId} 0 R${annotsRef} >>`);
 
   objects[catalogId] = `<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
   objects[pagesId] = `<< /Type /Pages /Kids [${pageId} 0 R] /Count 1 >>`;
