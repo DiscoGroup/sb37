@@ -1027,6 +1027,20 @@ function pdfRect(x, y, width, height, color) {
   return `${pdfColor(color)} rg ${x} ${y} ${width} ${height} re f`;
 }
 
+function pdfCircle(cx, cy, radius, color) {
+  const kappa = 0.5522847498;
+  const c = radius * kappa;
+  return [
+    `${pdfColor(color)} rg`,
+    `${cx + radius} ${cy} m`,
+    `${cx + radius} ${cy + c} ${cx + c} ${cy + radius} ${cx} ${cy + radius} c`,
+    `${cx - c} ${cy + radius} ${cx - radius} ${cy + c} ${cx - radius} ${cy} c`,
+    `${cx - radius} ${cy - c} ${cx - c} ${cy - radius} ${cx} ${cy - radius} c`,
+    `${cx + c} ${cy - radius} ${cx + radius} ${cy - c} ${cx + radius} ${cy} c`,
+    "f"
+  ].join(" ");
+}
+
 function pdfLine(x1, y1, x2, y2, color = "#dbe3e8", width = 1) {
   return `${pdfColor(color)} RG ${width} w ${x1} ${y1} m ${x2} ${y2} l S`;
 }
@@ -1059,7 +1073,7 @@ function buildPdfBlob(report) {
   const pageHeight = 720;
   const scoreColorValue = scoreColor(report.score);
   const scoreText = String(report.score);
-  const scoreTextX = scoreText.length >= 3 ? 333 : scoreText.length === 2 ? 339 : 344;
+  const scoreTextX = scoreText.length >= 3 ? 337 : scoreText.length === 2 ? 343 : 348;
   const scoreLabel = /priority/i.test(report.status) ? "PRIORITY" : report.status.split(/\s+/)[0].slice(0, 7).toUpperCase();
 
   commands.push(pdfRect(0, 656, pageWidth, 64, "#121927"));
@@ -1073,9 +1087,9 @@ function buildPdfBlob(report) {
   commands.push(pdfText(44, 608, 15, report.website, "F2", "#121927"));
   commands.push(pdfText(44, 592, 8.5, `Practice: ${report.practice}`, "F1", "#5f6b7b"));
   commands.push(pdfText(44, 581, 7.5, report.scope, "F1", "#5f6b7b"));
-  commands.push(pdfRect(310, 589, 68, 29, scoreColorValue));
-  commands.push(pdfText(scoreTextX, 608, 14, scoreText, "F2", "#ffffff"));
-  commands.push(pdfText(325, 597, 6.2, scoreLabel, "F2", "#ffffff"));
+  commands.push(pdfCircle(354, 602, 25, scoreColorValue));
+  commands.push(pdfText(scoreTextX, 606, 14, scoreText, "F2", "#ffffff"));
+  commands.push(pdfText(337, 593, 5.8, scoreLabel, "F2", "#ffffff"));
 
   commands.push(pdfText(28, 550, 8.5, `Prepared for: ${report.preparedFor}`, "F2", "#121927"));
   commands.push(pdfText(28, 537, 8.2, `Email: ${report.email}`, "F1", "#5f6b7b"));
