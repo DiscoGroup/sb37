@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SB37 COA | California Legal Advertising Assessment</title>
     <meta name="description" content="Run a free SB37 compliance opportunity assessment for California law firm advertising, AI content, intake scripts, lead vendors, and disclosures.">
-    <link rel="stylesheet" href="styles.css?v=20260623l">
+    <link rel="stylesheet" href="styles.css?v=20260625a">
   </head>
   <body>
     <header class="site-header">
@@ -30,7 +30,19 @@
         <form class="top-scan-form psi-form" id="assessmentForm">
           <label class="sr-only" for="website">Law firm website</label>
           <input id="website" name="website" type="text" inputmode="url" autocapitalize="none" autocomplete="url" spellcheck="false" placeholder="Enter a law firm URL" required>
-          <button class="button primary" type="submit">Analyze</button>
+          <button class="button primary" id="analyzeButton" type="submit">Analyze</button>
+          <div class="dice-captcha" id="diceCaptcha" aria-live="polite">
+            <div class="dice-captcha-copy">
+              <strong>Human check</strong>
+              <span id="diceCaptchaStatus">Roll until the dice land on 7 or 11.</span>
+            </div>
+            <div class="dice-captcha-game" aria-label="Digital dice human check">
+              <span class="die" id="dieOne">1</span>
+              <span class="die" id="dieTwo">1</span>
+              <span class="dice-total" id="diceTotal">2</span>
+              <button class="dice-roll" id="diceRollButton" type="button">Roll</button>
+            </div>
+          </div>
         </form>
       </section>
       <section class="assessment-shell compact-report" id="assessment">
@@ -46,6 +58,6 @@
       </section>
     </main>
 
-    <script src="script.js?v=20260623l"></script>
+    <script src="script.js?v=20260625a"></script>
   </body>
 </html>
