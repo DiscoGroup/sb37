@@ -1,17 +1,8 @@
 const assessmentForm = document.querySelector("#assessmentForm");
 const reportCard = document.querySelector("#reportCard");
 const scanStatus = document.querySelector("#scanStatus");
-const diceCaptcha = document.querySelector("#diceCaptcha");
-const dieOne = document.querySelector("#dieOne");
-const dieTwo = document.querySelector("#dieTwo");
-const diceTotal = document.querySelector("#diceTotal");
-const diceRollButton = document.querySelector("#diceRollButton");
-const diceCaptchaStatus = document.querySelector("#diceCaptchaStatus");
-const analyzeButton = document.querySelector("#analyzeButton");
 let scanMotionTimer;
 let latestReportData;
-let diceCaptchaVerified = false;
-let diceCaptchaRolling = false;
 const LEAD_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx8vpkMISzW8xB8GjQpMg9s6Pyo6zoy06q4gNWTGtCNoMK40AsRuoukTolW0A6g4GKzMA/exec";
 const CALENDLY_URL = "https://calendly.com/vnsfirm/15min?back=1&month=2026-06";
 const LEAD_CONSENT_TEXT = "I consent to SB37 COA and its service providers storing and using my submitted information, website scan data, and report details to contact me by email, phone, and text about this assessment and related services.";
@@ -1319,103 +1310,9 @@ function setScanStatus(state, message) {
   scanStatus.textContent = message || state || "";
 }
 
-function randomDieValue() {
-  if (window.crypto && window.crypto.getRandomValues) {
-    const value = new Uint32Array(1);
-    window.crypto.getRandomValues(value);
-    return (value[0] % 6) + 1;
-  }
-  return Math.floor(Math.random() * 6) + 1;
-}
-
-function setDiceValues(first, second) {
-  if (!dieOne || !dieTwo || !diceTotal) return;
-  dieOne.textContent = String(first);
-  dieTwo.textContent = String(second);
-  diceTotal.textContent = String(first + second);
-}
-
-function passingDicePair() {
-  const pairs = [
-    [1, 6],
-    [2, 5],
-    [3, 4],
-    [5, 6],
-    [6, 5]
-  ];
-  return pairs[Math.floor(Math.random() * pairs.length)];
-}
-
-function setDiceCaptchaVerified(first, second) {
-  diceCaptchaVerified = true;
-  setDiceValues(first, second);
-  if (diceCaptcha) diceCaptcha.classList.add("verified");
-  if (diceCaptchaStatus) diceCaptchaStatus.textContent = `Verified with ${first + second}. You can analyze the site now.`;
-  if (diceRollButton) {
-    diceRollButton.disabled = true;
-    diceRollButton.textContent = "Passed";
-  }
-  if (analyzeButton) {
-    analyzeButton.disabled = false;
-    analyzeButton.textContent = "Analyze";
-  }
-  if (dieOne) dieOne.classList.remove("rolling");
-  if (dieTwo) dieTwo.classList.remove("rolling");
-}
-
-function rollDiceCaptcha() {
-  if (!diceCaptcha || diceCaptchaVerified || diceCaptchaRolling) return;
-  diceCaptchaRolling = true;
-  if (diceRollButton) {
-    diceRollButton.disabled = true;
-    diceRollButton.textContent = "Rolling...";
-  }
-  if (analyzeButton) {
-    analyzeButton.disabled = true;
-    analyzeButton.textContent = "Roll dice first";
-  }
-  if (diceCaptchaStatus) diceCaptchaStatus.textContent = "Rolling digital dice until 7 or 11 appears...";
-  if (dieOne) dieOne.classList.add("rolling");
-  if (dieTwo) dieTwo.classList.add("rolling");
-
-  let rolls = 0;
-  const timer = window.setInterval(() => {
-    rolls += 1;
-    let first = randomDieValue();
-    let second = randomDieValue();
-    const total = first + second;
-    const canPass = rolls >= 8 && (total === 7 || total === 11);
-    const shouldForcePass = rolls >= 16;
-
-    if (shouldForcePass && !canPass) {
-      [first, second] = passingDicePair();
-    }
-
-    setDiceValues(first, second);
-    if (canPass || shouldForcePass) {
-      window.clearInterval(timer);
-      diceCaptchaRolling = false;
-      setDiceCaptchaVerified(first, second);
-    }
-  }, 90);
-}
-
-function initializeDiceCaptcha() {
-  if (!diceCaptcha || !diceRollButton || !analyzeButton) return;
-  analyzeButton.disabled = true;
-  analyzeButton.textContent = "Roll dice first";
-  diceRollButton.addEventListener("click", rollDiceCaptcha);
-}
-
-initializeDiceCaptcha();
-
 if (assessmentForm) {
   assessmentForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (diceCaptcha && !diceCaptchaVerified) {
-      rollDiceCaptcha();
-      return;
-    }
     const websiteInput = document.querySelector("#website");
     const submitButton = assessmentForm.querySelector("button[type='submit']");
     const rawWebsite = websiteInput.value.trim();

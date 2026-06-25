@@ -173,106 +173,6 @@ a {
   padding: 0 28px;
 }
 
-.dice-captcha {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  padding: 10px 12px;
-  border: 1px solid #d8e6e4;
-  border-radius: 8px;
-  background: #f6fbfa;
-  text-align: left;
-}
-
-.dice-captcha-copy {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.dice-captcha-copy strong {
-  font-size: 13px;
-}
-
-.dice-captcha-copy span {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.dice-captcha-game {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.die {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid #b9d8d4;
-  border-radius: 7px;
-  color: var(--ink);
-  background: var(--white);
-  font-size: 17px;
-  font-weight: 900;
-  line-height: 1;
-  box-shadow: inset 0 -2px 0 rgba(7, 140, 134, 0.08);
-}
-
-.die.rolling {
-  color: var(--teal);
-  border-color: var(--teal);
-}
-
-.dice-total {
-  min-width: 34px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 900;
-  text-align: center;
-}
-
-.dice-total::before {
-  content: "=";
-  margin-right: 3px;
-}
-
-.dice-roll {
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid var(--teal);
-  border-radius: 7px;
-  color: var(--teal-dark);
-  background: var(--white);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.dice-roll:hover {
-  background: #eef8f7;
-}
-
-.dice-roll:disabled {
-  cursor: wait;
-  opacity: 0.72;
-}
-
-.dice-captcha.verified {
-  border-color: rgba(39, 167, 111, 0.35);
-  background: #f1fbf5;
-}
-
-.dice-captcha.verified .dice-captcha-copy strong,
-.dice-captcha.verified .dice-captcha-copy span {
-  color: #1c7c54;
-}
-
 .small-links a,
 .text-links a {
   color: var(--muted);
@@ -1641,26 +1541,6 @@ select:focus {
     min-height: 50px;
     width: 100%;
     font-size: 16px;
-  }
-
-  .dice-captcha {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 10px;
-  }
-
-  .dice-captcha-game {
-    justify-content: space-between;
-  }
-
-  .die {
-    width: 38px;
-    height: 38px;
-  }
-
-  .dice-roll {
-    min-height: 38px;
-    min-width: 82px;
   }
 
   .small-links {
