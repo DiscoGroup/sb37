@@ -5,6 +5,7 @@ const CONFIG = {
   senderName: "SB37 COA",
   siteUrl: "https://sb37score.com",
   calendlyUrl: "https://calendly.com/vnsfirm/15min?back=1&month=2026-06",
+  emailTemplateVersion: "SB37-email-2026-06-25-run-score-link",
   sendEmailsForTestLeads: false
 };
 
@@ -161,34 +162,38 @@ function rowToLead_(headers, row) {
 
 function sendImmediateEmails_(lead) {
   const prospectEmailSent = sendLeadEmail_(lead, "immediate");
+  const adminHtml = `
+    <p><strong>New SB37 executive preview lead.</strong></p>
+    <p>
+      Name: ${escapeHtml_(lead.name)}<br>
+      Email: ${escapeHtml_(lead.email)}<br>
+      Phone: ${escapeHtml_(lead.phoneE164 || lead.phone)}<br>
+      Country code: ${escapeHtml_(lead.phoneCountryCode)}<br>
+      Website: ${escapeHtml_(lead.website)}<br>
+      Practice: ${escapeHtml_(lead.practice)}<br>
+      Score: ${escapeHtml_(lead.score)}<br>
+      Status: ${escapeHtml_(lead.status)}
+    </p>
+    <p>
+      Consent: ${escapeHtml_(lead.consentGiven)}<br>
+      Consent source: ${escapeHtml_(lead.consentSource)}<br>
+      Consent time: ${escapeHtml_(lead.consentTimestamp)}
+    </p>
+    <p>Prospect receipt email sent: ${escapeHtml_(prospectEmailSent)}</p>
+    <p>
+      <a href="${CONFIG.calendlyUrl}">Calendly link</a><br>
+      <a href="${CONFIG.siteUrl}">Run another free SB37 report</a><br>
+      Direct report link: ${CONFIG.siteUrl}
+    </p>
+    <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
+  `;
   MailApp.sendEmail({
     to: CONFIG.alertEmail,
     subject: `New SB37 report lead: ${lead.website || lead.email}`,
+    body: plainTextFromHtml_(adminHtml),
     name: CONFIG.senderName,
     replyTo: CONFIG.replyToEmail,
-    htmlBody: `
-      <p><strong>New SB37 executive preview lead.</strong></p>
-      <p>
-        Name: ${escapeHtml_(lead.name)}<br>
-        Email: ${escapeHtml_(lead.email)}<br>
-        Phone: ${escapeHtml_(lead.phoneE164 || lead.phone)}<br>
-        Country code: ${escapeHtml_(lead.phoneCountryCode)}<br>
-        Website: ${escapeHtml_(lead.website)}<br>
-        Practice: ${escapeHtml_(lead.practice)}<br>
-        Score: ${escapeHtml_(lead.score)}<br>
-        Status: ${escapeHtml_(lead.status)}
-      </p>
-      <p>
-        Consent: ${escapeHtml_(lead.consentGiven)}<br>
-        Consent source: ${escapeHtml_(lead.consentSource)}<br>
-        Consent time: ${escapeHtml_(lead.consentTimestamp)}
-      </p>
-      <p>Prospect receipt email sent: ${escapeHtml_(prospectEmailSent)}</p>
-      <p>
-        <a href="${CONFIG.calendlyUrl}">Calendly link</a><br>
-        <a href="${CONFIG.siteUrl}">Run another free SB37 report</a>
-      </p>
-    `
+    htmlBody: adminHtml
   });
 }
 
@@ -202,6 +207,7 @@ function sendLeadEmail_(lead, stage) {
   MailApp.sendEmail({
     to: lead.email,
     subject: message.subject,
+    body: message.textBody,
     name: CONFIG.senderName,
     replyTo: CONFIG.replyToEmail,
     htmlBody: message.htmlBody
@@ -226,6 +232,7 @@ function emailForStage_(lead, stage) {
         <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
         ${runScoreLink}
         <p>This preview is educational only and is not legal advice or a compliance certification.</p>
+        <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
       `
     },
     day1: {
@@ -236,6 +243,7 @@ function emailForStage_(lead, stage) {
         <p>If those areas are clean, the next layer is usually ads, vendor-created landing pages, referral funnels, and monitoring.</p>
         <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
         ${runScoreLink}
+        <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
       `
     },
     day3: {
@@ -245,6 +253,7 @@ function emailForStage_(lead, stage) {
         <p>The website scan is only a first pass. A full COA review looks at the places public visitors may not see: paid ads, landing pages, intake scripts, chat prompts, CRM messages, vendors, and referral flows.</p>
         <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
         ${runScoreLink}
+        <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
       `
     },
     day7: {
@@ -254,10 +263,14 @@ function emailForStage_(lead, stage) {
         <p>If you want to go through the preview findings, we can use a short call to identify what is worth fixing, what is just scan noise, and what should be reviewed more carefully.</p>
         <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
         ${runScoreLink}
+        <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
       `
     }
   };
 
+  Object.keys(messages).forEach((key) => {
+    messages[key].textBody = plainTextFromHtml_(messages[key].htmlBody);
+  });
   return messages[stage];
 }
 
@@ -271,6 +284,22 @@ function runScoreLinkHtml_() {
       </a>
     </p>
   `;
+}
+
+function plainTextFromHtml_(html) {
+  return String(html)
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function isTestLead_(lead) {
