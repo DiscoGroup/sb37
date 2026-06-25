@@ -5,6 +5,7 @@ let scanMotionTimer;
 let latestReportData;
 const LEAD_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx8vpkMISzW8xB8GjQpMg9s6Pyo6zoy06q4gNWTGtCNoMK40AsRuoukTolW0A6g4GKzMA/exec";
 const CALENDLY_URL = "https://calendly.com/vnsfirm/15min?back=1&month=2026-06";
+const REPORT_CONTACT_EMAIL = "reports@sb37score.com";
 const LEAD_CONSENT_TEXT = "I consent to SB37 COA and its service providers storing and using my submitted information, website scan data, and report details to contact me by email, phone, and text about this assessment and related services.";
 
 const categories = [
@@ -983,6 +984,7 @@ function executiveReportData(contact, reportData) {
     reviewAreas,
     recommendation: "Book a short COA review to confirm the scan, rule out false positives, and identify the first fixes.",
     calendlyUrl: CALENDLY_URL,
+    contactEmail: REPORT_CONTACT_EMAIL,
     disclaimer: "Educational preliminary screen only. Not legal advice, not an attorney-client relationship, and not a compliance certification."
   };
 }
@@ -1119,7 +1121,8 @@ function buildPdfBlob(report) {
 
   commands.push(pdfLine(28, 44, 392, 44));
   addPdfWrappedText(commands, report.disclaimer, 28, 31, { size: 6.5, maxChars: 92, lineHeight: 8, color: "#5f6b7b" });
-  commands.push(pdfText(28, 12, 7, "SB37 Score | sb37score.com", "F2", "#078c86"));
+  commands.push(pdfText(28, 12, 7, `SB37 Score | sb37score.com | ${report.contactEmail}`, "F2", "#078c86"));
+  annotations.push(pdfLinkAnnotation(141, 8, 252, 19, `mailto:${report.contactEmail}`));
 
   const objects = [null];
   const addObject = (body) => {

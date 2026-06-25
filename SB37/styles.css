@@ -1310,6 +1310,7 @@ select:focus {
 
 .site-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 18px;
   padding: 26px 24px;
