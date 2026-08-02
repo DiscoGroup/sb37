@@ -6,7 +6,7 @@ This uses Google Sheets + Google Apps Script as a no-cost CRM substitute.
 
 - Receives form submissions from the SB37 site.
 - Saves leads to a Google Sheet.
-- Sends `chaz@vnsfirm.com` a new lead alert.
+- Sends `info@sb37score.com` a new lead alert.
 - Sends the prospect an immediate receipt email with the Calendly link.
 - Includes the SB37 Score website link in each email.
 - Supports Day 1, Day 3, and Day 7 follow-up emails.
@@ -14,7 +14,7 @@ This uses Google Sheets + Google Apps Script as a no-cost CRM substitute.
 
 ## Setup
 
-1. Create a new Google Sheet from the `chaz@vnsfirm.com` Google account.
+1. Create a new Google Sheet from the `info@sb37score.com` Google account, or from an account where `info@sb37score.com` is a verified Gmail send-as alias.
 2. Name it `SB37 Leads`.
 3. In the Sheet, go to `Extensions` > `Apps Script`.
 4. Delete the starter code.
@@ -29,7 +29,7 @@ This uses Google Sheets + Google Apps Script as a no-cost CRM substitute.
    - Who has access: `Anyone`.
    - Deploy.
 10. Copy the Web App URL.
-11. Put that URL into `LEAD_WEBHOOK_URL` in `SB37/script.js`.
+11. Put that URL into `LEAD_WEBHOOK_URL` in root `script.js`.
 
 ## Drip Trigger
 
@@ -44,7 +44,8 @@ To enable Day 1, Day 3, and Day 7 follow-up emails:
 
 ## Notes
 
-- This sends email through the Google account that owns the Apps Script.
+- This sends email through GmailApp using `info@sb37score.com` as the configured `from`, `replyTo`, and admin alert recipient. If the script is owned by another Google account, `info@sb37score.com` must be configured and verified in Gmail as a send-as alias for that account before deployment.
+- After deploying a new Apps Script version, submit one non-test lead using a controlled recipient and inspect the received headers. The expected result is `From: SB37 COA <info@sb37score.com>`, `Reply-To: info@sb37score.com`, and the admin alert delivered to `info@sb37score.com`.
 - Gmail/Apps Script has daily sending quotas. This is fine for early lead volume.
 - Do not use this for SMS. Save phone numbers for manual follow-up until you use a compliant SMS platform.
 - The site already collects consent metadata and will send it to this webhook.

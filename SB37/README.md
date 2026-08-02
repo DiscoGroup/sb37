@@ -4,7 +4,7 @@ Static landing page for an SB37 California lawyer advertising readiness funnel.
 
 ## Run Locally
 
-Open `index.html` directly, or serve the folder:
+Open root `index.html` directly, or serve the repository root:
 
 ```bash
 python3 -m http.server 4173 --directory SB37
@@ -38,9 +38,9 @@ The report displays a percentage-style risk board for each category. Some signal
 
 ## Pages
 
-- `index.html`: landing page, automatic website scan form, inferred practice type, free assessment, report preview, package ladder.
-- `about.html`: public assessment deltas without internal scoring weights.
-- `terms.html`: starter TOS and disclaimer language for counsel review.
+- Root `index.html`: landing page, automatic website scan form, inferred practice type, free assessment, report preview, package ladder.
+- Root `about.html`: public assessment deltas without internal scoring weights.
+- Root `terms.html`: starter TOS and disclaimer language for counsel review.
 
 ## Notes
 

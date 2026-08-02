@@ -1,7 +1,8 @@
 const CONFIG = {
   sheetName: "SB37 Leads",
-  alertEmail: "chaz@vnsfirm.com",
-  replyToEmail: "chaz@vnsfirm.com",
+  alertEmail: "info@sb37score.com",
+  replyToEmail: "info@sb37score.com",
+  fromEmail: "info@sb37score.com",
   senderName: "SB37 COA",
   siteUrl: "https://sb37score.com",
   calendlyUrl: "https://calendly.com/vnsfirm/15min?back=1&month=2026-06",
@@ -187,14 +188,7 @@ function sendImmediateEmails_(lead) {
     </p>
     <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
   `;
-  MailApp.sendEmail({
-    to: CONFIG.alertEmail,
-    subject: `New SB37 report lead: ${lead.website || lead.email}`,
-    body: plainTextFromHtml_(adminHtml),
-    name: CONFIG.senderName,
-    replyTo: CONFIG.replyToEmail,
-    htmlBody: adminHtml
-  });
+  sendSb37Email_(CONFIG.alertEmail, `New SB37 report lead: ${lead.website || lead.email}`, plainTextFromHtml_(adminHtml), adminHtml);
 }
 
 function sendLeadEmail_(lead, stage) {
@@ -204,15 +198,28 @@ function sendLeadEmail_(lead, stage) {
   }
 
   const message = emailForStage_(lead, stage);
-  MailApp.sendEmail({
-    to: lead.email,
-    subject: message.subject,
-    body: message.textBody,
+  sendSb37Email_(lead.email, message.subject, message.textBody, message.htmlBody);
+  return true;
+}
+
+function sendSb37Email_(to, subject, textBody, htmlBody) {
+  const fromEmail = String(CONFIG.fromEmail || "").toLowerCase();
+  const effectiveUser = String(Session.getEffectiveUser().getEmail() || "").toLowerCase();
+  const aliases = GmailApp.getAliases().map((alias) => String(alias).toLowerCase());
+  if (fromEmail && effectiveUser !== fromEmail && aliases.indexOf(fromEmail) === -1) {
+    throw new Error(`Configured sender ${CONFIG.fromEmail} is not the executing account or a verified Gmail send-as alias.`);
+  }
+
+  const options = {
     name: CONFIG.senderName,
     replyTo: CONFIG.replyToEmail,
-    htmlBody: message.htmlBody
-  });
-  return true;
+    htmlBody
+  };
+  if (CONFIG.fromEmail) {
+    options.from = CONFIG.fromEmail;
+  }
+
+  GmailApp.sendEmail(to, subject, textBody, options);
 }
 
 function emailForStage_(lead, stage) {
