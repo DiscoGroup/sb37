@@ -1,5 +1,6 @@
 const CONFIG = {
   sheetName: "SB37 Leads",
+  affiliateReportSheetName: "SB37 Affiliate Referrals",
   alertEmail: "info@sb37score.com",
   replyToEmail: "info@sb37score.com",
   fromEmail: "info@sb37score.com",
@@ -8,6 +9,15 @@ const CONFIG = {
   calendlyUrl: "https://calendly.com/vnsfirm/15min?back=1&month=2026-06",
   emailTemplateVersion: "SB37-email-2026-06-25-run-score-link",
   sendEmailsForTestLeads: false
+};
+
+const AFFILIATE_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{1,39}$/;
+const AFFILIATES = {
+  sb: {
+    displayName: "Dinesh",
+    referralCode: "SB",
+    status: "active"
+  }
 };
 
 const HEADERS = [
@@ -30,6 +40,16 @@ const HEADERS = [
   "consentText",
   "consentTimestamp",
   "consentSource",
+  "affiliateId",
+  "affiliateDisplayName",
+  "affiliateSourceParam",
+  "affiliateLandingPage",
+  "affiliateFirstSeenAt",
+  "affiliateLastSeenAt",
+  "affiliateClickId",
+  "affiliateAttributionWindowDays",
+  "affiliatePayoutStatus",
+  "affiliatePayoutNotes",
   "immediateSentAt",
   "day1SentAt",
   "day3SentAt",
@@ -41,12 +61,31 @@ const HEADERS = [
   "week6SentAt"
 ];
 
+const AFFILIATE_REPORT_HEADERS = [
+  "attributedAt",
+  "leadCreatedAt",
+  "affiliateId",
+  "affiliateDisplayName",
+  "affiliateClickId",
+  "affiliateSourceParam",
+  "affiliateLandingPage",
+  "website",
+  "practice",
+  "score",
+  "status",
+  "payoutStatus",
+  "payoutAmount",
+  "payoutNotes",
+  "payoutUpdatedAt"
+];
+
 function doPost(e) {
   try {
     const payload = parsePayload_(e);
     validateLead_(payload);
     const sheet = getSheet_();
     appendLead_(sheet, payload);
+    appendAffiliateReferral_(payload);
     if (!isTestLead_(payload) || CONFIG.sendEmailsForTestLeads) {
       sendImmediateEmails_(payload);
     }
@@ -63,6 +102,11 @@ function setupSb37LeadSheet() {
   ensureHeaders_(sheet);
   sheet.setFrozenRows(1);
   sheet.autoResizeColumns(1, sheet.getLastColumn());
+
+  const affiliateSheet = getAffiliateReportSheet_();
+  ensureAffiliateReportHeaders_(affiliateSheet);
+  affiliateSheet.setFrozenRows(1);
+  affiliateSheet.autoResizeColumns(1, affiliateSheet.getLastColumn());
 }
 
 function ensureHeaders_(sheet) {
@@ -73,6 +117,21 @@ function ensureHeaders_(sheet) {
     sheet.appendRow(HEADERS);
   } else {
     HEADERS.forEach((header) => {
+      if (existingHeaders.indexOf(header) === -1) {
+        sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header);
+      }
+    });
+  }
+}
+
+function ensureAffiliateReportHeaders_(sheet) {
+  const existingHeaders = sheet.getLastColumn()
+    ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    : [];
+  if (!existingHeaders.filter(Boolean).length) {
+    sheet.appendRow(AFFILIATE_REPORT_HEADERS);
+  } else {
+    AFFILIATE_REPORT_HEADERS.forEach((header) => {
       if (existingHeaders.indexOf(header) === -1) {
         sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header);
       }
@@ -143,6 +202,7 @@ function parsePayload_(e) {
   const payload = JSON.parse(raw);
   payload.createdAt = payload.createdAt || new Date().toISOString();
   payload.schedulingUrl = payload.schedulingUrl || CONFIG.calendlyUrl;
+  normalizeAffiliateFields_(payload);
   return payload;
 }
 
@@ -159,6 +219,12 @@ function validateLead_(lead) {
   if (!/^\+1\d{10}$/.test(String(lead.phoneE164 || ""))) {
     throw new Error("Invalid USA +1 phone number");
   }
+  if (lead.affiliateId && !AFFILIATE_ID_PATTERN.test(String(lead.affiliateId))) {
+    throw new Error("Invalid affiliate ID");
+  }
+  if (lead.affiliateId && !affiliateRecord_(lead.affiliateId)) {
+    throw new Error("Unknown affiliate ID");
+  }
 }
 
 function getSheet_() {
@@ -172,12 +238,50 @@ function getSheet_() {
   return sheet;
 }
 
+function getAffiliateReportSheet_() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(CONFIG.affiliateReportSheetName);
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(CONFIG.affiliateReportSheetName);
+    sheet.appendRow(AFFILIATE_REPORT_HEADERS);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
 function appendLead_(sheet, payload) {
   ensureHeaders_(sheet);
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const row = headers.map((header) => payload[header] || "");
   row[headers.indexOf("immediateSentAt")] = new Date().toISOString();
   sheet.appendRow(row);
+}
+
+function appendAffiliateReferral_(lead) {
+  if (!lead.affiliateId) return;
+  const affiliate = affiliateRecord_(lead.affiliateId);
+  if (!affiliate) return;
+  const sheet = getAffiliateReportSheet_();
+  ensureAffiliateReportHeaders_(sheet);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const referral = {
+    attributedAt: new Date().toISOString(),
+    leadCreatedAt: lead.createdAt || "",
+    affiliateId: lead.affiliateId,
+    affiliateDisplayName: affiliate.displayName,
+    affiliateClickId: lead.affiliateClickId || "",
+    affiliateSourceParam: lead.affiliateSourceParam || "",
+    affiliateLandingPage: lead.affiliateLandingPage || "",
+    website: lead.website || "",
+    practice: lead.practice || "",
+    score: lead.score || "",
+    status: lead.status || "",
+    payoutStatus: lead.affiliatePayoutStatus || "pending_review",
+    payoutAmount: "",
+    payoutNotes: lead.affiliatePayoutNotes || "",
+    payoutUpdatedAt: ""
+  };
+  sheet.appendRow(headers.map((header) => referral[header] || ""));
 }
 
 function rowToLead_(headers, row) {
@@ -189,6 +293,15 @@ function rowToLead_(headers, row) {
 
 function sendImmediateEmails_(lead) {
   const prospectEmailSent = sendLeadEmail_(lead, "immediate");
+  const affiliateHtml = lead.affiliateId
+    ? `
+    <p>
+      Affiliate ID: ${escapeHtml_(lead.affiliateId)}<br>
+      Affiliate click ID: ${escapeHtml_(lead.affiliateClickId)}<br>
+      Payout status: ${escapeHtml_(lead.affiliatePayoutStatus || "pending_review")}
+    </p>
+    `
+    : "";
   const adminHtml = `
     <p><strong>New SB37 executive preview lead.</strong></p>
     <p>
@@ -207,6 +320,7 @@ function sendImmediateEmails_(lead) {
       Consent time: ${escapeHtml_(lead.consentTimestamp)}
     </p>
     <p>Prospect receipt email sent: ${escapeHtml_(prospectEmailSent)}</p>
+    ${affiliateHtml}
     <p>
       <a href="${CONFIG.calendlyUrl}">Calendly link</a><br>
       <a href="${CONFIG.siteUrl}">Run another free SB37 report</a><br>
@@ -215,6 +329,58 @@ function sendImmediateEmails_(lead) {
     <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
   `;
   sendSb37Email_(CONFIG.alertEmail, `New SB37 report lead: ${lead.website || lead.email}`, plainTextFromHtml_(adminHtml), adminHtml);
+}
+
+function normalizeAffiliateFields_(payload) {
+  const affiliateId = String(payload.affiliateId || "").trim().toLowerCase();
+  if (!affiliateId) {
+    clearAffiliateFields_(payload);
+    return;
+  }
+  if (!AFFILIATE_ID_PATTERN.test(affiliateId)) {
+    clearAffiliateFields_(payload);
+    return;
+  }
+  const affiliate = affiliateRecord_(affiliateId);
+  if (!affiliate || affiliate.status !== "active") {
+    clearAffiliateFields_(payload);
+    return;
+  }
+  payload.affiliateId = affiliateId;
+  payload.affiliateDisplayName = affiliate.displayName;
+  payload.affiliateSourceParam = limitText_(payload.affiliateSourceParam, 40);
+  payload.affiliateLandingPage = limitText_(payload.affiliateLandingPage, 500);
+  payload.affiliateFirstSeenAt = limitText_(payload.affiliateFirstSeenAt, 40);
+  payload.affiliateLastSeenAt = limitText_(payload.affiliateLastSeenAt, 40);
+  payload.affiliateClickId = limitText_(payload.affiliateClickId, 80);
+  payload.affiliateAttributionWindowDays = String(payload.affiliateAttributionWindowDays || "90").replace(/[^\d]/g, "").slice(0, 4) || "90";
+  payload.affiliatePayoutStatus = "pending_review";
+  payload.affiliatePayoutNotes = "";
+}
+
+function clearAffiliateFields_(payload) {
+  [
+    "affiliateId",
+    "affiliateDisplayName",
+    "affiliateSourceParam",
+    "affiliateLandingPage",
+    "affiliateFirstSeenAt",
+    "affiliateLastSeenAt",
+    "affiliateClickId",
+    "affiliateAttributionWindowDays",
+    "affiliatePayoutStatus",
+    "affiliatePayoutNotes"
+  ].forEach((field) => {
+    payload[field] = "";
+  });
+}
+
+function limitText_(value, maxLength) {
+  return String(value || "").replace(/[\r\n\t]+/g, " ").trim().slice(0, maxLength);
+}
+
+function affiliateRecord_(affiliateId) {
+  return AFFILIATES[String(affiliateId || "").trim().toLowerCase()] || null;
 }
 
 function sendLeadEmail_(lead, stage) {

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SB37 COA</title>
+    <script>
+      const vanityCodes = {
+        questionsb: "SB"
+      };
+      const path = window.location.pathname.replace(/^\/+|\/+$/g, "");
+      const isSingleSegment = path && path.indexOf("/") === -1;
+      const reserved = /^(index\.html|about\.html|terms\.html|example\.html|404\.html|assets|SB37)$/i;
+      const validCode = /^[a-z0-9][a-z0-9_-]{1,39}$/i;
+      if (isSingleSegment && !reserved.test(path)) {
+        const code = vanityCodes[path.toLowerCase()] || path;
+        if (validCode.test(code)) {
+          window.location.replace(`/?ref=${encodeURIComponent(code)}`);
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <p><a href="/">Open SB37 COA</a></p>
+  </body>
+</html>

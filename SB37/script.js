@@ -6,7 +6,13 @@ let latestReportData;
 const LEAD_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbz2rN4obi9rRCvpauQoOPvRIzV_pE97SXebDdUOB-HmcG1Nw7bjFeWNVmotRCO4PoMY/exec";
 const CALENDLY_URL = "https://calendly.com/vnsfirm/15min?back=1&month=2026-06";
 const REPORT_CONTACT_EMAIL = "info@sb37score.com";
-const LEAD_CONSENT_TEXT = "I consent to SB37 COA and its service providers storing and using my submitted information, website scan data, and report details to contact me by email, phone, and text about this assessment and related services.";
+const LEAD_CONSENT_TEXT = "I consent to SB37 COA and its service providers storing and using my submitted information, website scan data, report details, and referral attribution to contact me by email, phone, and text about this assessment and related services.";
+const AFFILIATE_STORAGE_KEY = "sb37AffiliateAttribution";
+const AFFILIATE_MAX_AGE_DAYS = 90;
+const AFFILIATE_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{1,39}$/;
+const AFFILIATE_VANITY_PATHS = {
+  questionsb: "sb"
+};
 
 const categories = [
   {
@@ -210,6 +216,91 @@ function normalizeUsPhone(value) {
     countryCode: "+1",
     national,
     e164: `+1${national}`
+  };
+}
+
+function normalizeAffiliateId(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return AFFILIATE_ID_PATTERN.test(normalized) ? normalized : "";
+}
+
+function affiliateIdFromVanityPath(path) {
+  const normalizedPath = String(path || "").trim().toLowerCase();
+  return normalizeAffiliateId(AFFILIATE_VANITY_PATHS[normalizedPath] || normalizedPath);
+}
+
+function affiliateParamFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const candidates = ["ref", "affiliate", "aff", "partner", "utm_source"];
+  for (const key of candidates) {
+    const affiliateId = normalizeAffiliateId(params.get(key));
+    if (affiliateId) {
+      return { affiliateId, sourceParam: key };
+    }
+  }
+  return null;
+}
+
+function affiliateParamFromPath() {
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, "");
+  if (!path || path.indexOf("/") !== -1) return null;
+  if (/^(index\.html|about\.html|terms\.html|example\.html|404\.html|assets|SB37)$/i.test(path)) return null;
+  const affiliateId = affiliateIdFromVanityPath(path);
+  return affiliateId ? { affiliateId, sourceParam: "path" } : null;
+}
+
+function readStoredAffiliateAttribution() {
+  try {
+    const raw = window.localStorage.getItem(AFFILIATE_STORAGE_KEY);
+    if (!raw) return null;
+    const attribution = JSON.parse(raw);
+    const affiliateId = normalizeAffiliateId(attribution.affiliateId);
+    if (!affiliateId || !attribution.firstSeenAt) return null;
+    const ageMs = Date.now() - new Date(attribution.firstSeenAt).getTime();
+    if (!Number.isFinite(ageMs) || ageMs < 0 || ageMs > AFFILIATE_MAX_AGE_DAYS * 24 * 60 * 60 * 1000) {
+      window.localStorage.removeItem(AFFILIATE_STORAGE_KEY);
+      return null;
+    }
+    return { ...attribution, affiliateId };
+  } catch (error) {
+    window.localStorage.removeItem(AFFILIATE_STORAGE_KEY);
+    return null;
+  }
+}
+
+function captureAffiliateAttribution() {
+  const current = affiliateParamFromUrl() || affiliateParamFromPath();
+  const stored = readStoredAffiliateAttribution();
+  if (!current) return stored;
+
+  const now = new Date().toISOString();
+  const attribution = {
+    affiliateId: current.affiliateId,
+    sourceParam: current.sourceParam,
+    landingPage: window.location.href.slice(0, 500),
+    firstSeenAt: stored && stored.affiliateId === current.affiliateId ? stored.firstSeenAt : now,
+    lastSeenAt: now,
+    clickId: stored && stored.affiliateId === current.affiliateId && stored.clickId
+      ? stored.clickId
+      : `sb37-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+  };
+  window.localStorage.setItem(AFFILIATE_STORAGE_KEY, JSON.stringify(attribution));
+  return attribution;
+}
+
+function affiliatePayloadFields() {
+  const attribution = readStoredAffiliateAttribution();
+  if (!attribution) return {};
+  return {
+    affiliateId: attribution.affiliateId,
+    affiliateSourceParam: attribution.sourceParam || "",
+    affiliateLandingPage: attribution.landingPage || "",
+    affiliateFirstSeenAt: attribution.firstSeenAt || "",
+    affiliateLastSeenAt: attribution.lastSeenAt || "",
+    affiliateClickId: attribution.clickId || "",
+    affiliateAttributionWindowDays: AFFILIATE_MAX_AGE_DAYS,
+    affiliatePayoutStatus: "pending_review",
+    affiliatePayoutNotes: ""
   };
 }
 
@@ -1177,7 +1268,8 @@ function leadPayload(contact, reportData) {
     consentText: LEAD_CONSENT_TEXT,
     consentTimestamp: contact.consentTimestamp,
     consentSource: "SB37 executive PDF form",
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    ...affiliatePayloadFields()
   };
 }
 
@@ -1314,6 +1406,7 @@ function setScanStatus(state, message) {
 }
 
 if (assessmentForm) {
+  captureAffiliateAttribution();
   assessmentForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const websiteInput = document.querySelector("#website");

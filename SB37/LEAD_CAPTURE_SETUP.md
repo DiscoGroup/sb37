@@ -11,6 +11,7 @@ This uses Google Sheets + Google Apps Script as a no-cost CRM substitute.
 - Includes the SB37 Score website link in each email.
 - Supports Day 1, Day 3, and Day 7 follow-up emails.
 - Skips emails/drips for obvious test leads such as `Test Lead` or `https://example.com`.
+- Stores registered affiliate attribution for completed report requests and writes owner-only payout review rows to `SB37 Affiliate Referrals`.
 
 ## Setup
 
@@ -20,7 +21,7 @@ This uses Google Sheets + Google Apps Script as a no-cost CRM substitute.
 4. Delete the starter code.
 5. Paste the contents of `SB37/lead-capture-apps-script.js`.
 6. Save the project.
-7. Run `setupSb37LeadSheet` once from Apps Script.
+7. Run `setupSb37LeadSheet` once from Apps Script. This creates or updates both `SB37 Leads` and `SB37 Affiliate Referrals`.
 8. Approve the requested permissions.
 9. Deploy:
    - Click `Deploy` > `New deployment`.
@@ -52,3 +53,4 @@ To enable Day 1, Day 3, and Day 7 follow-up emails:
 - To allow test submissions to send emails, set `sendEmailsForTestLeads: true` in the script config.
 - Only run `setupSb37LeadSheet` manually from the Apps Script editor. Do not manually run `sendLeadEmail_`, `sendImmediateEmails_`, or `doPost`; those need a lead payload from the website.
 - After updates that add new columns, run `setupSb37LeadSheet` once. It adds missing headers without clearing existing lead rows.
+- Registered affiliates are maintained in the `AFFILIATES` object in `SB37/lead-capture-apps-script.js`. The first configured code is `SB` for Dinesh. Payout fields are for manual owner review only; payouts are not automated.

@@ -41,6 +41,11 @@ The report displays a percentage-style risk board for each category. Some signal
 - Root `index.html`: landing page, automatic website scan form, inferred practice type, free assessment, report preview, package ladder.
 - Root `about.html`: public assessment deltas without internal scoring weights.
 - Root `terms.html`: starter TOS and disclaimer language for counsel review.
+- `SB37/AFFILIATE_PROGRAM.md`: owner instructions for registered referral links, attribution fields, and manual payout review.
+
+## Affiliate Attribution
+
+Registered referral codes are captured from links such as `https://sb37score.com/?ref=SB` and carried through completed executive PDF/report submissions. The first registered affiliate is `SB` for Dinesh. The backend validates affiliate codes against an owner-maintained registry before writing owner-only affiliate reporting rows.
 
 ## Notes
 
