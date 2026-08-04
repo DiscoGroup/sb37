@@ -33,7 +33,12 @@ const HEADERS = [
   "immediateSentAt",
   "day1SentAt",
   "day3SentAt",
-  "day7SentAt"
+  "day7SentAt",
+  "week2SentAt",
+  "week3SentAt",
+  "week4SentAt",
+  "week5SentAt",
+  "week6SentAt"
 ];
 
 function doPost(e) {
@@ -109,7 +114,28 @@ function runDailyDrip() {
         sheet.getRange(sheetRow, headers.indexOf("day7SentAt") + 1).setValue(new Date().toISOString());
       }
     }
+
+    if (hasMarketingConsent_(lead)) {
+      const weeklyStages = [
+        { day: 14, stage: "week2", sentAt: "week2SentAt" },
+        { day: 21, stage: "week3", sentAt: "week3SentAt" },
+        { day: 28, stage: "week4", sentAt: "week4SentAt" },
+        { day: 35, stage: "week5", sentAt: "week5SentAt" },
+        { day: 42, stage: "week6", sentAt: "week6SentAt" }
+      ];
+      weeklyStages.forEach((stage) => {
+        if (ageDays >= stage.day && !lead[stage.sentAt]) {
+          if (sendLeadEmail_(lead, stage.stage)) {
+            sheet.getRange(sheetRow, headers.indexOf(stage.sentAt) + 1).setValue(new Date().toISOString());
+          }
+        }
+      });
+    }
   });
+}
+
+function hasMarketingConsent_(lead) {
+  return /^(yes|true|1)$/i.test(String(lead.consentGiven || "").trim());
 }
 
 function parsePayload_(e) {
@@ -272,6 +298,65 @@ function emailForStage_(lead, stage) {
         ${runScoreLink}
         <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
       `
+    },
+    week2: {
+      subject: "A practical next step after your SB37 preview",
+      htmlBody: `
+        <p>Hi ${escapeHtml_(name)},</p>
+        <p>Your SB37 preview is most useful when it becomes a short list of practical next steps instead of a long list of possible issues.</p>
+        <p>We can help you separate the items that need attention from items that need more context before you spend time or money changing them.</p>
+        <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
+        ${runScoreLink}
+        ${weeklyOptOutNoticeHtml_()}
+        <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
+      `
+    },
+    week3: {
+      subject: "Where law firm marketing risk often hides",
+      htmlBody: `
+        <p>Hi ${escapeHtml_(name)},</p>
+        <p>Website copy is only one part of the picture. Intake scripts, chat, paid ads, landing pages, vendor content, and follow-up messages can all need the same level of review.</p>
+        <p>A short SB37 review can help you decide where to look first.</p>
+        <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
+        ${runScoreLink}
+        ${weeklyOptOutNoticeHtml_()}
+        <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
+      `
+    },
+    week4: {
+      subject: "Turning an SB37 score into a workable plan",
+      htmlBody: `
+        <p>Hi ${escapeHtml_(name)},</p>
+        <p>A score is a starting point, not a verdict. The useful work is organizing the highest-impact questions, confirming the facts, and assigning a sensible next step.</p>
+        <p>If you would like help reading your preview in context, we are available for a brief review.</p>
+        <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
+        ${runScoreLink}
+        ${weeklyOptOutNoticeHtml_()}
+        <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
+      `
+    },
+    week5: {
+      subject: "A second look at your SB37 preview",
+      htmlBody: `
+        <p>Hi ${escapeHtml_(name)},</p>
+        <p>If your team has made changes since the original preview, a second score can help show whether the most visible issues are clearer now.</p>
+        <p>Use the scoring page when you are ready, or schedule a short review if you want help prioritizing the next pass.</p>
+        <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
+        ${runScoreLink}
+        ${weeklyOptOutNoticeHtml_()}
+        <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
+      `
+    },
+    week6: {
+      subject: "Your SB37 follow-up options",
+      htmlBody: `
+        <p>Hi ${escapeHtml_(name)},</p>
+        <p>This is the last scheduled follow-up from your SB37 preview. If you would like help sorting the findings, you can schedule a brief review whenever it is useful.</p>
+        <p><a href="${CONFIG.calendlyUrl}">Schedule a 15-minute review</a></p>
+        ${runScoreLink}
+        ${weeklyOptOutNoticeHtml_()}
+        <p style="color:#6b7280;font-size:12px;">Template version: ${CONFIG.emailTemplateVersion}</p>
+      `
     }
   };
 
@@ -279,6 +364,10 @@ function emailForStage_(lead, stage) {
     messages[key].textBody = plainTextFromHtml_(messages[key].htmlBody);
   });
   return messages[stage];
+}
+
+function weeklyOptOutNoticeHtml_() {
+  return `<p style="color:#6b7280;font-size:12px;">You are receiving this because you requested an SB37 preview. To stop weekly follow-ups, reply to this email and request removal.</p>`;
 }
 
 function runScoreLinkHtml_() {
