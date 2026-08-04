@@ -3,7 +3,7 @@ const reportCard = document.querySelector("#reportCard");
 const scanStatus = document.querySelector("#scanStatus");
 let scanMotionTimer;
 let latestReportData;
-const LEAD_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx8vpkMISzW8xB8GjQpMg9s6Pyo6zoy06q4gNWTGtCNoMK40AsRuoukTolW0A6g4GKzMA/exec";
+const LEAD_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbz2rN4obi9rRCvpauQoOPvRIzV_pE97SXebDdUOB-HmcG1Nw7bjFeWNVmotRCO4PoMY/exec";
 const CALENDLY_URL = "https://calendly.com/vnsfirm/15min?back=1&month=2026-06";
 const REPORT_CONTACT_EMAIL = "info@sb37score.com";
 const LEAD_CONSENT_TEXT = "I consent to SB37 COA and its service providers storing and using my submitted information, website scan data, and report details to contact me by email, phone, and text about this assessment and related services.";
