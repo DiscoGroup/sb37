@@ -324,6 +324,25 @@ function htmlToText(raw) {
     .trim();
 }
 
+function extractTaggedHtmlText(raw, tags) {
+  if (!raw) return "";
+  return tags.flatMap((tag) => (
+    Array.from(raw.matchAll(new RegExp(`<${tag}\\b[^>]*>[\\s\\S]*?<\\/${tag}>`, "gi")))
+      .map((match) => htmlToText(match[0]))
+  )).join(" ");
+}
+
+function extractDisclosureContext(raw) {
+  const pageRegions = extractTaggedHtmlText(raw, ["header", "nav", "aside", "main", "footer"]);
+  const metaText = Array.from(raw.matchAll(/<meta\b[^>]*(?:name|property)=["']?(?:description|og:description|twitter:description)["']?[^>]*content=["']([^"']+)["'][^>]*>/gi))
+    .map((match) => match[1])
+    .join(" ");
+  const imageText = Array.from(raw.matchAll(/\b(?:alt|aria-label|title)=["']([^"']+)["']/gi))
+    .map((match) => match[1])
+    .join(" ");
+  return `${pageRegions} ${metaText} ${imageText}`.replace(/\s+/g, " ").trim();
+}
+
 function urlPriorityScore(url) {
   let score = 0;
   const lowerUrl = url.toLowerCase();
@@ -413,6 +432,8 @@ function isLikelyUsefulPage(page) {
 }
 
 async function fetchRawUrl(url, timeoutMs = PAGE_TIMEOUT_MS) {
+  const direct = await fetchWithTimeout(url, timeoutMs);
+  if (direct) return direct;
   return fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, timeoutMs);
 }
 
@@ -469,18 +490,22 @@ async function fetchWithTimeout(url, timeoutMs = 12000) {
 
 async function extractOnePage(url, timeoutMs = 12000) {
   const allOriginsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-  const readerUrl = `https://r.jina.ai/http://${url}`;
   const parsedUrl = new URL(url);
-  const alternateReaderUrl = `https://r.jina.ai/http://${parsedUrl.host}${parsedUrl.pathname}`;
-  const [html, readable, alternateReadable] = await Promise.allSettled([
+  const readerUrl = `https://r.jina.ai/http://${parsedUrl.host}${parsedUrl.pathname}`;
+  const alternateReaderUrl = `https://r.jina.ai/http://${parsedUrl.host}${parsedUrl.pathname}${parsedUrl.search}`;
+  const [directHtml, html, readable, alternateReadable] = await Promise.allSettled([
+    fetchWithTimeout(url, timeoutMs),
     fetchWithTimeout(allOriginsUrl, timeoutMs),
     fetchWithTimeout(readerUrl, timeoutMs),
     fetchWithTimeout(alternateReaderUrl, timeoutMs)
   ]);
-  const rawHtml = html.status === "fulfilled" ? html.value : "";
+  const rawHtml = directHtml.status === "fulfilled" && directHtml.value
+    ? directHtml.value
+    : html.status === "fulfilled" ? html.value : "";
+  const crawlerVisibleText = extractDisclosureContext(rawHtml);
   const readerText = readable.status === "fulfilled" ? readable.value : "";
   const alternateReaderText = alternateReadable.status === "fulfilled" ? alternateReadable.value : "";
-  const text = `${htmlToText(rawHtml)} ${readerText} ${alternateReaderText}`.replace(/\s+/g, " ").trim();
+  const text = `${crawlerVisibleText} ${htmlToText(rawHtml)} ${readerText} ${alternateReaderText}`.replace(/\s+/g, " ").trim();
   return { rawHtml, text };
 }
 
