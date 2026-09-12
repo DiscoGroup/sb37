@@ -505,7 +505,9 @@ async function extractOnePage(url, timeoutMs = 12000) {
   const crawlerVisibleText = extractDisclosureContext(rawHtml);
   const readerText = readable.status === "fulfilled" ? readable.value : "";
   const alternateReaderText = alternateReadable.status === "fulfilled" ? alternateReadable.value : "";
-  const text = `${crawlerVisibleText} ${htmlToText(rawHtml)} ${readerText} ${alternateReaderText}`.replace(/\s+/g, " ").trim();
+  const htmlText = `${crawlerVisibleText} ${htmlToText(rawHtml)}`.replace(/\s+/g, " ").trim();
+  const fallbackText = `${readerText} ${alternateReaderText}`.replace(/\s+/g, " ").trim();
+  const text = htmlText || fallbackText;
   return { rawHtml, text };
 }
 
