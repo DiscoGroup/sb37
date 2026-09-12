@@ -699,6 +699,10 @@ function rowClass(percent) {
   return "alert";
 }
 
+function isPriorityReviewCategory(category) {
+  return category.activeFindings.length > 0 && category.percent < 60;
+}
+
 function scoreTone(level) {
   if (level === "low") return "clear";
   if (level === "medium" || level === "elevated") return "watch";
@@ -786,7 +790,7 @@ function categoryPreviewReason(category) {
 function renderMarketBoard(categoryScores, limit = categoryScores.length, options = {}) {
   const { reviewOnly = false } = options;
   const filtered = reviewOnly
-    ? categoryScores.filter((category) => category.activeFindings.length)
+    ? categoryScores.filter(isPriorityReviewCategory)
     : categoryScores;
   const ordered = [...filtered].sort((a, b) => a.percent - b.percent).slice(0, limit);
   if (!ordered.length) {
@@ -795,7 +799,7 @@ function renderMarketBoard(categoryScores, limit = categoryScores.length, option
         <div>
           <strong>No active review areas</strong>
           <span>Looks stable</span>
-          <p>No obvious preview signal triggered in the top review areas.</p>
+          <p>No red priority review signal triggered in the top review areas.</p>
         </div>
       </div>
     `;
@@ -1082,7 +1086,7 @@ function renderReport({ firmName, website, practice, scoreData }) {
 function executiveReportData(contact, reportData) {
   const { website, practice, scoreData } = reportData;
   const priorityCategories = scoreData.categoryScores
-    .filter((category) => category.percent < 100)
+    .filter(isPriorityReviewCategory)
     .sort((a, b) => a.percent - b.percent);
   const topCategories = priorityCategories.slice(0, 5);
   const reviewCount = priorityCategories.length;
