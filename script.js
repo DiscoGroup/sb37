@@ -783,8 +783,23 @@ function categoryPreviewReason(category) {
   return `${uniqueTeasers.join(" ")}${suffix}`;
 }
 
-function renderMarketBoard(categoryScores, limit = categoryScores.length) {
-  const ordered = [...categoryScores].sort((a, b) => a.percent - b.percent).slice(0, limit);
+function renderMarketBoard(categoryScores, limit = categoryScores.length, options = {}) {
+  const { reviewOnly = false } = options;
+  const filtered = reviewOnly
+    ? categoryScores.filter((category) => category.activeFindings.length)
+    : categoryScores;
+  const ordered = [...filtered].sort((a, b) => a.percent - b.percent).slice(0, limit);
+  if (!ordered.length) {
+    return `
+      <div class="review-row clear">
+        <div>
+          <strong>No active review areas</strong>
+          <span>Looks stable</span>
+          <p>No obvious preview signal triggered in the top review areas.</p>
+        </div>
+      </div>
+    `;
+  }
   return ordered.map((category) => `
     <div class="review-row ${rowClass(category.percent)}">
       <div>
@@ -1050,7 +1065,7 @@ function renderReport({ firmName, website, practice, scoreData }) {
       ${renderProduceReportForm()}
       <section>
         <h4>Top review areas</h4>
-        <div class="market-board">${renderMarketBoard(scoreData.categoryScores, 3)}</div>
+        <div class="market-board">${renderMarketBoard(scoreData.categoryScores, 3, { reviewOnly: true })}</div>
       </section>
       <details class="full-breakdown">
         <summary>View full category breakdown</summary>
