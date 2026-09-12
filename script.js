@@ -131,9 +131,9 @@ const signalRules = [
   { id: "chatNoDisclaimer", type: "missingWhenChat", pattern: /\b(not legal advice|does not create an attorney-client relationship|attorney-client relationship|consult an attorney)\b/gi, evidence: "Chat/intake language appeared, but no obvious no-legal-advice or no-attorney-client disclaimer was detected nearby in extracted text." },
   { id: "intakePromises", pattern: /\b(we can help you recover|you deserve compensation|we will fight|we get results|start your claim|get paid|settle your case)\b/gi, evidence: "The site appears to use intake-oriented outcome or compensation language." },
   { id: "nonAttorneyGuidance", pattern: /\b(intake specialist|case manager|legal assistant|call center|representative|advocate will call|specialist will review)\b/gi, evidence: "The site appears to reference non-attorney intake, case-management, or call-center roles." },
-  { id: "noSupervisionProcess", type: "missing", pattern: /\b(attorney reviewed|reviewed by an attorney|supervised by|attorney supervision|approved by)\b/gi, evidence: "No obvious attorney review or supervision process language was detected." },
+  { id: "noSupervisionProcess", type: "processReview", pattern: /\b(attorney reviewed|reviewed by an attorney|supervised by|attorney supervision|approved by)\b/gi, evidence: "Public pages cannot verify attorney supervision, intake scripts, or call-center review records." },
   { id: "unreviewedSeo", pattern: /\b(seo|landing page|lead generation|lead generator|ppc|google ads|sponsored|advertising partner)\b/gi, evidence: "The site appears to reference paid ads, SEO, landing pages, or lead-generation concepts." },
-  { id: "noAttorneyOversight", type: "missing", pattern: /\b(attorney reviewed|approved by attorney|attorney oversight|responsible attorney|supervised by)\b/gi, evidence: "No obvious attorney oversight or approval language was detected." },
+  { id: "noAttorneyOversight", type: "processReview", pattern: /\b(attorney reviewed|approved by attorney|attorney oversight|responsible attorney|supervised by)\b/gi, evidence: "Public pages cannot verify attorney approval rights for vendor-created marketing content." },
   { id: "coBrandedPages", pattern: /\b(co-counsel|affiliate|joint advertising|joint ad|sponsored by|in partnership with|powered by|partner network|advertising partner|marketing partner)\b/gi, evidence: "The site appears to reference partner, network, affiliate, co-counsel, or powered-by relationships." },
   { id: "unclearReferral", pattern: /\b(referral|lead generator|matching service|legal network|find a lawyer|connect you with|referred by|referred to us)\b/gi, evidence: "The site appears to reference referral, matching, lead-generator, or legal-network relationships." }
 ];
@@ -154,9 +154,9 @@ const findingTeasers = {
   chatNoDisclaimer: "Chat/intake signals appeared without an obvious no-legal-advice disclaimer nearby.",
   intakePromises: "Intake copy appears to promise help recovering, settling, or getting paid.",
   nonAttorneyGuidance: "Non-attorney intake, case manager, call center, or representative language appeared.",
-  noSupervisionProcess: "Attorney supervision or script-review process language was not obvious.",
+  noSupervisionProcess: "Public pages cannot verify attorney supervision, intake scripts, or call-center review records.",
   unreviewedSeo: "SEO, PPC, landing-page, sponsored, or lead-generation language appeared.",
-  noAttorneyOversight: "Attorney approval or oversight language for marketing content was not obvious.",
+  noAttorneyOversight: "Public pages cannot verify attorney approval rights for vendor-created marketing content.",
   coBrandedPages: "Partner, network, affiliate, co-counsel, joint, or powered-by language appeared.",
   unclearReferral: "Referral, referred, matching-service, legal-network, or lead-generator language appeared."
 };
@@ -603,6 +603,7 @@ function detectSignals(text, url) {
     const shouldTrigger =
       (rule.type === "missing" && !hasMatch) ||
       (rule.type === "missingWhenChat" && hasChat && !hasMatch) ||
+      (rule.type === "processReview") ||
       (!rule.type && hasMatch);
 
     if (shouldTrigger) {
